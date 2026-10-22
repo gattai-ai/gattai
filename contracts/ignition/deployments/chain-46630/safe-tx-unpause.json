@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "status": "executed",
+  "chainId": 46630,
+  "id": "unpause",
+  "description": "Unpause DepositManager testnet (rehearsal)",
+  "safeAddress": "0xAeE68Aaa6315959D145Edd2D25877871362907bb",
+  "owners": [
+    "0x21956BF41857869aed193b899678b8b4AC24e485",
+    "0xB1Ce61a8851Db965034D48Ee39b9d80429d21834",
+    "0x1a6Dd8dB12F6BD6FDC610a9e3727E198ED27Cc71"
+  ],
+  "threshold": 2,
+  "nonce": "2",
+  "to": "0x85052C5Add70D53c49C17519873dB5ECDaED1864",
+  "value": "0",
+  "data": "0x3f4ba83a",
+  "operation": 0,
+  "safeTxHash": "0x14bbe942735f751898c17f01742de2f52760d36fc386f931af22a637d7c7c37e",
+  "createdAt": "2026-10-21T03:10:13.808Z",
+  "approvals": [
+    {
+      "owner": "0x21956BF41857869aed193b899678b8b4AC24e485",
+      "txHash": "0xdb7b56d3e8bf37382625e4d77cc1173bed5cbc003ecaeac97e60188b44c3f9c1",
+      "block": 139814360,
+      "approvedAt": "2026-10-21T03:11:07.324Z"
+    },
+    {
+      "owner": "0xB1Ce61a8851Db965034D48Ee39b9d80429d21834",
+      "txHash": "0x3957c87aa4797457ca5abba1df8cbe8b6b84c1519284a0318cfb3c24582a8093",
+      "block": 139814581,
+      "approvedAt": "2026-10-21T03:11:32.276Z"
+    }
+  ],
+  "signers": [
+    "0x21956BF41857869aed193b899678b8b4AC24e485",
+    "0xB1Ce61a8851Db965034D48Ee39b9d80429d21834"
+  ],
+  "executionTxHash": "0x2e2d55fb2882626ec850a991887420df87231c4539ac240f35d7bcabfd5fe84a",
+  "executionBlock": 139814809,
+  "executionGasUsed": "62786",
+  "executedAt": "2026-10-21T03:12:00.095Z"
+}

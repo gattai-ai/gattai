@@ -1,0 +1,1 @@
+CREATE INDEX "runs_conversation_idx" ON "runs" USING btree ("conversation_id");

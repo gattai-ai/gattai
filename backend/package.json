@@ -1,0 +1,46 @@
+{
+  "name": "@web3-starter/backend",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "tsc --noEmit && bun build src/index.ts --target bun --outdir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "eslint .",
+    "db:create": "bun scripts/create-db.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "seed:dev": "bun scripts/seed-dev.ts",
+    "e2e:offline": "bun scripts/e2e-offline.ts",
+    "mock:providers": "bun scripts/mock-providers.ts",
+    "indexer": "bun scripts/index-deposits.ts",
+    "deposit:reverse": "bun scripts/reverse-deposit.ts",
+    "backfill:conversations": "bun scripts/backfill-conversations.ts",
+    "doctor": "bun scripts/doctor-deposit.ts",
+    "refund:queue": "bun scripts/refund-queue.ts",
+    "burn": "bun scripts/burn.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.5",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.44.6",
+    "hono": "^4.13.10",
+    "pg": "^8.16.3",
+    "postgres": "^3.4.7",
+    "viem": "^2.56.9",
+    "yaml": "^2.8.1",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/node": "^24.6.0",
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.5",
+    "eslint": "^9.36.0",
+    "globals": "^16.4.0",
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.45.0"
+  }
+}

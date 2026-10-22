@@ -1,0 +1,22 @@
+node_modules/
+.wrangler/
+.vercel/
+output/
+dist/
+
+# Frontend build output (Vercel membangun dari frontend/, lihat frontend/vercel.json)
+frontend/dist/
+
+# Contract compile output. JANGAN ignore contracts/ignition/deployments/,
+# karena folder itu berisi alamat hasil deploy yang dibaca
+# scripts/sync-contracts.mjs.
+contracts/artifacts/
+contracts/cache/
+contracts/types/
+
+.env
+.env.*
+!.env.example
+.keystore
+contracts/.keystore
+documents

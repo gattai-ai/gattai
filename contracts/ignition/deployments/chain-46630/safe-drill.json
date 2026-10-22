@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "status": "executed",
+  "chainId": 46630,
+  "safeAddress": "0xAeE68Aaa6315959D145Edd2D25877871362907bb",
+  "owners": [
+    "0x21956BF41857869aed193b899678b8b4AC24e485",
+    "0xB1Ce61a8851Db965034D48Ee39b9d80429d21834",
+    "0x1a6Dd8dB12F6BD6FDC610a9e3727E198ED27Cc71"
+  ],
+  "threshold": 2,
+  "nonce": "0",
+  "target": "0x911Bf0fd05A53eC2d06952Ee2Fca8b17CBeA3Bad",
+  "value": "0",
+  "data": "0x",
+  "operation": 0,
+  "safeTxHash": "0xa6f818451157457245d424644f436ee52aa21ee7f6eced8bb85965f79e0a13a0",
+  "createdAt": "2026-10-20T18:37:55.309Z",
+  "signers": [
+    "0x21956BF41857869aed193b899678b8b4AC24e485",
+    "0xB1Ce61a8851Db965034D48Ee39b9d80429d21834"
+  ],
+  "executionTxHash": "0x103cf880fecc8c983a38e71577e16d076d2f86389a18c6c4936301c0a070206d",
+  "executionBlock": 139781115,
+  "executionGasUsed": "70493",
+  "executedAt": "2026-10-21T02:05:54.219Z"
+}

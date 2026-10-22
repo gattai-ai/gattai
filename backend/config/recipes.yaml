@@ -1,0 +1,177 @@
+# Definisi 6 recipe MVP. Config, bukan kode.
+#
+# mode:
+#   streaming → step terakhir menghasilkan teks yang di-stream
+#   async     → job media (Higgsfield), antrean asinkron
+#   mixed     → bundel teks + media
+#
+# Setiap step menunjuk `model_ref` (lihat pricing.yaml); tidak ada model yang
+# di-hardcode di sini. `provider` dan `role` adalah routing internal, sedangkan
+# `label` dan `role_label` adalah nama yang tampil ke pengguna (UI/API publik) —
+# sehingga provider asli tidak bocor ke produk dan bisa diganti tanpa deploy.
+# `requires_confirmation: true` memaksa estimasi biaya ditampilkan dan
+# dikonfirmasi sebelum run dijalankan.
+
+recipes:
+  - id: refine
+    name: Refine
+    description: Default chat. The prompt is refined into a tight brief, then executed.
+    mode: streaming
+    steps:
+      - id: interpret
+        provider: mimo
+        model_ref: mimo_architect
+        role: interpret
+        label: GPT
+        role_label: interpret
+      - id: execute
+        provider: mimo
+        model_ref: mimo_primary
+        role: execute
+        label: Claude
+        role_label: execute
+        input_from: interpret
+        stream: true
+    pricing:
+      markup: 0.35
+      requires_confirmation: false
+      estimated_input_tokens: 2000
+      estimated_output_tokens: 1200
+
+  - id: research
+    name: Research
+    description: Gathers sources, then writes a cited report.
+    mode: streaming
+    steps:
+      - id: gather_sources
+        provider: mimo
+        model_ref: mimo_architect
+        role: gather_sources
+        label: Perplexity
+        role_label: gather_sources
+      - id: write
+        provider: mimo
+        model_ref: mimo_primary
+        role: write_report
+        label: Claude
+        role_label: write
+        input_from: gather_sources
+        stream: true
+    pricing:
+      markup: 0.35
+      requires_confirmation: false
+      estimated_input_tokens: 4000
+      estimated_output_tokens: 2000
+
+  - id: code
+    name: Code
+    description: Writes code, reviews it, then patches the findings.
+    mode: streaming
+    steps:
+      - id: write
+        provider: mimo
+        model_ref: mimo_primary
+        role: write_code
+        label: Claude
+        role_label: write
+      - id: review
+        provider: mimo
+        model_ref: mimo_architect
+        role: review
+        label: GPT
+        role_label: review
+        input_from: write
+      - id: fix
+        provider: mimo
+        model_ref: mimo_primary
+        role: fix
+        label: Claude
+        role_label: fix
+        input_from: review
+        stream: true
+    pricing:
+      markup: 0.35
+      requires_confirmation: false
+      estimated_input_tokens: 5000
+      estimated_output_tokens: 2500
+
+  - id: visual
+    name: Visual
+    description: Sets the art direction, then renders the image.
+    mode: async
+    steps:
+      - id: art_direction
+        provider: mimo
+        model_ref: mimo_primary
+        role: art_direction
+        label: Claude
+        role_label: art_direction
+        output_schema: media_spec_v1
+      - id: render
+        provider: higgsfield
+        model_ref: image_default
+        role: render_image
+        label: Higgsfield
+        role_label: render · image
+        input_from: art_direction
+        async: true
+    pricing:
+      markup: 0.35
+      requires_confirmation: true
+      estimated_input_tokens: 800
+      estimated_output_tokens: 500
+      estimated_units: 1
+
+  - id: video
+    name: Video
+    description: Writes the script and shot list, then renders the video.
+    mode: async
+    steps:
+      - id: script
+        provider: mimo
+        model_ref: mimo_primary
+        role: script_and_shots
+        label: Claude
+        role_label: script_and_shots
+        output_schema: video_spec_v1
+      - id: render
+        provider: higgsfield
+        model_ref: video_default
+        role: render_video
+        label: Higgsfield
+        role_label: render · video
+        input_from: script
+        async: true
+    pricing:
+      markup: 0.35
+      requires_confirmation: true
+      estimated_input_tokens: 1000
+      estimated_output_tokens: 800
+      estimated_units: 1
+
+  - id: launch_kit
+    name: Launch Kit
+    description: Builds the copy pack, then renders the banner.
+    mode: mixed
+    steps:
+      - id: copy_pack
+        provider: mimo
+        model_ref: mimo_primary
+        role: copy_pack
+        label: Claude
+        role_label: copy_pack
+        output_schema: launch_kit_v1
+      - id: render_banner
+        provider: higgsfield
+        model_ref: image_default
+        role: render_image
+        label: Higgsfield
+        role_label: render · banner
+        input_from: copy_pack
+        async: true
+    pricing:
+      markup: 0.35
+      requires_confirmation: true
+      estimated_input_tokens: 1200
+      estimated_output_tokens: 1500
+      estimated_units: 1

@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "status": "executed",
+  "chainId": 46630,
+  "id": "pause",
+  "description": "Pause DepositManager testnet (rehearsal)",
+  "safeAddress": "0xAeE68Aaa6315959D145Edd2D25877871362907bb",
+  "owners": [
+    "0x21956BF41857869aed193b899678b8b4AC24e485",
+    "0xB1Ce61a8851Db965034D48Ee39b9d80429d21834",
+    "0x1a6Dd8dB12F6BD6FDC610a9e3727E198ED27Cc71"
+  ],
+  "threshold": 2,
+  "nonce": "1",
+  "to": "0x85052C5Add70D53c49C17519873dB5ECDaED1864",
+  "value": "0",
+  "data": "0x8456cb59",
+  "operation": 0,
+  "safeTxHash": "0xbe2e7b30810e415bc7c1e81c5f2cc02743ee7ef925140868e4ce4418749e00b9",
+  "createdAt": "2026-10-21T02:51:23.408Z",
+  "approvals": [
+    {
+      "owner": "0x21956BF41857869aed193b899678b8b4AC24e485",
+      "txHash": "0x0dbc25299788d50ccfe97e5701d3d1842ef83839e203243e00367bbbf5c40b63",
+      "block": 139808416,
+      "approvedAt": "2026-10-21T02:59:33.880Z"
+    },
+    {
+      "owner": "0xB1Ce61a8851Db965034D48Ee39b9d80429d21834",
+      "txHash": "0x9ee76f9ad02f45d5338bc929f642fd295fce59187be04a1a8c9d6475812ff2df",
+      "block": 139808821,
+      "approvedAt": "2026-10-21T03:00:18.157Z"
+    }
+  ],
+  "signers": [
+    "0x21956BF41857869aed193b899678b8b4AC24e485",
+    "0xB1Ce61a8851Db965034D48Ee39b9d80429d21834"
+  ],
+  "executionTxHash": "0x86f11c7a9884e5eecfef4137320ced4ede0e6afe4a7b390637d00b7b9273730a",
+  "executionBlock": 139809000,
+  "executionGasUsed": "62770",
+  "executedAt": "2026-10-21T03:00:38.454Z"
+}

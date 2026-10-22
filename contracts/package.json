@@ -1,0 +1,43 @@
+{
+  "name": "@web3-starter/contracts",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Hardhat 3 project using Node Test Runner and viem",
+  "type": "module",
+  "scripts": {
+    "build": "hardhat build",
+    "test": "hardhat test",
+    "test:fork": "hardhat test --network robinhoodFork test-fork/DepositManagerFork.ts",
+    "deploy": "hardhat ignition deploy ignition/modules/Gattai.ts --network hardhatMainnet --parameters ignition/parameters/local.json",
+    "deploy:testnet": "node --env-file=.env ../node_modules/hardhat/dist/src/cli.js ignition deploy ignition/modules/Gattai.ts --network robinhoodTestnet --parameters ignition/parameters/testnet.json",
+    "deploy:usdg:testnet": "node --env-file=.env ../node_modules/hardhat/dist/src/cli.js ignition deploy ignition/modules/MockUsdg.ts --network robinhoodTestnet --parameters ignition/parameters/testnet.json",
+    "deploy:phase1:testnet": "node --env-file=.env ../node_modules/hardhat/dist/src/cli.js ignition deploy ignition/modules/DepositManager.ts --network robinhoodTestnet --parameters ignition/parameters/testnet.json",
+    "deploy:phase1:mainnet": "node ../node_modules/hardhat/dist/src/cli.js ignition deploy ignition/modules/DepositManager.ts --network robinhood --parameters ignition/parameters/mainnet.json",
+    "deploy:phase1:mainnet:guarded": "bun scripts/deploy-mainnet-guarded.ts",
+    "create:safe:testnet": "bun scripts/create-safe-testnet.ts",
+    "import:safe:mainnet": "bun scripts/import-safe-mainnet.ts",
+    "safe:drill:prepare": "bun scripts/safe-drill-prepare.ts",
+    "safe:drill:approve": "bun scripts/safe-drill-approve.ts",
+    "safe:drill:execute": "bun scripts/safe-drill-execute.ts",
+    "safe:tx:prepare": "bun scripts/safe-tx-prepare.ts",
+    "safe:tx:approve": "bun scripts/safe-tx-approve.ts",
+    "safe:tx:execute": "bun scripts/safe-tx-execute.ts",
+    "deploy:token:mainnet": "node ../node_modules/hardhat/dist/src/cli.js ignition deploy ignition/modules/GattaiToken.ts --network robinhood --parameters ignition/parameters/token-mainnet.json",
+    "deploy:full:mainnet": "node ../node_modules/hardhat/dist/src/cli.js ignition deploy ignition/modules/Gattai.ts --network robinhood --parameters ignition/parameters/mainnet.json",
+    "preflight:mainnet": "bun scripts/mainnet-preflight.ts",
+    "manifest:mainnet": "bun scripts/write-deploy-manifest.ts 4663",
+    "manifest:testnet": "bun scripts/write-deploy-manifest.ts 46630",
+    "typecheck": "hardhat build && tsc --noEmit"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.7",
+    "@types/node": "^24.6.0",
+    "forge-std": "github:foundry-rs/forge-std#v1.16.2",
+    "hardhat": "^3.18.0",
+    "typescript": "~6.0.3",
+    "viem": "^2.56.9"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.1.0"
+  }
+}

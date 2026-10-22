@@ -1,0 +1,8 @@
+{
+  "name": "@web3-starter/shared",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "viem": "^2.56.9"
+  }
+}

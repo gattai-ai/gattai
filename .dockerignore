@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules
+**/node_modules
+docs
+frontend/dist
+contracts/artifacts
+contracts/cache
+contracts/types
+*.log
+.env
+.env.*

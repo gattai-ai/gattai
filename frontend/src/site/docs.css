@@ -1,0 +1,57 @@
+/* Vendored from gattai-site/docs.html <style> */
+.docs{display:grid;grid-template-columns:230px minmax(0,1fr) 200px;gap:48px;max-width:1340px;margin:0 auto;padding:48px var(--gut) 0}
+.toc{position:sticky;top:120px;align-self:start;max-height:calc(100vh - 140px);overflow:auto}
+.toc h6{font:500 10px var(--mono);letter-spacing:.16em;color:var(--dim);text-transform:uppercase;margin:18px 0 8px;font-weight:500}
+.toc h6:first-child{margin-top:0}
+.toc a{display:block;padding:6px 10px;border-left:1px solid var(--line2);font-size:13.5px;color:var(--muted);transition:color .2s,border-color .2s}
+.toc a:hover{color:var(--text)}
+.toc a.on{color:var(--text);border-left-color:var(--acc);background:linear-gradient(90deg,rgba(255,91,31,.08),transparent)}
+.doc{min-width:0;max-width:780px}
+.doc section{padding-top:24px;margin-bottom:56px;scroll-margin-top:110px}
+.doc h2{font-weight:600;font-stretch:115%;font-size:32px;letter-spacing:-.03em;line-height:1.1;display:flex;align-items:center;gap:12px}
+.doc h2 .n{font:500 11px var(--mono);color:var(--acc);letter-spacing:.12em;border:1px solid rgba(255,91,31,.4);padding:3px 7px;border-radius:5px}
+.doc h3{font-weight:600;font-size:18px;margin:28px 0 8px;letter-spacing:-.01em}
+.doc p,.doc li{color:#b9bcc2;font-size:15.5px;line-height:1.7}
+.doc p{margin-top:12px}
+.doc ul,.doc ol{margin:12px 0 0 20px}
+.doc li{margin:4px 0}
+.doc code{font-family:var(--mono);font-size:13px;color:var(--text);background:var(--panel3);padding:1px 6px;border-radius:4px;border:1px solid var(--line)}
+.doc .code code{background:none;border:0;padding:0}
+.doc table{margin-top:16px}
+.doc .tbl td{color:#b9bcc2}
+.call{border:1px solid var(--line2);border-left:2px solid var(--acc);border-radius:10px;background:var(--panel);padding:14px 16px;margin-top:18px;font-size:14.5px;color:var(--muted)}
+.call b{color:var(--text)}
+.call.w{border-left-color:#ffb48f}
+.ep{display:flex;align-items:center;gap:10px;font:500 13px var(--mono);padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-top:8px}
+.ep .m{font:600 10.5px var(--mono);padding:3px 7px;border-radius:5px;letter-spacing:.06em;min-width:52px;text-align:center}
+.ep .m.get{background:rgba(127,209,160,.12);color:var(--ok)}
+.ep .m.post{background:rgba(255,91,31,.14);color:var(--acc2)}
+.ep .m.del{background:rgba(255,122,122,.12);color:#ff8a8a}
+.ep span:last-child{color:var(--muted);margin-left:auto;font-family:var(--display);font-size:13px;text-align:right}
+.states{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px;font:500 11px var(--mono)}
+.states span{padding:6px 10px;border:1px solid var(--line2);border-radius:999px;background:var(--panel)}
+.states span.ok{border-color:rgba(127,209,160,.4);color:var(--ok)}
+.states span.bad{border-color:rgba(255,122,122,.4);color:#ff8a8a}
+.states em{font-style:normal;color:var(--acc)}
+.side2{position:sticky;top:120px;align-self:start}
+.side2 .box{padding:18px}
+.side2 p{font-size:13px;color:var(--muted);margin-top:10px}
+.side2 .btn{margin-top:14px;width:100%}
+.search{position:relative;margin-bottom:18px}
+.search input{height:38px;font-size:13.5px;padding-left:34px}
+.search svg{position:absolute;left:12px;top:12px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.formgrid div{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--panel)}
+.formgrid b{font:600 12.5px var(--mono);color:var(--acc2)}
+.formgrid p{font-size:13.5px;margin-top:6px}
+@media (max-width:1180px){ .docs{grid-template-columns:220px minmax(0,1fr)} .side2{display:none} }
+@media (max-width:860px){
+  .docs{grid-template-columns:1fr;gap:0;padding-top:24px}
+  .toc{position:relative;top:0;max-height:none;display:flex;gap:6px;overflow-x:auto;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:10px}
+  .toc h6,.toc .search{display:none}
+  .toc a{white-space:nowrap;border:1px solid var(--line2);border-radius:999px;padding:6px 12px;font-size:12.5px}
+  .toc a.on{border-color:var(--acc)}
+  .formgrid{grid-template-columns:1fr}
+  .ep{flex-wrap:wrap}
+  .ep span:last-child{margin-left:0;width:100%;text-align:left}
+}

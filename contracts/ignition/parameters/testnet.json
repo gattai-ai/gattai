@@ -1,0 +1,15 @@
+{
+  "GattaiModule": {
+    "treasury": "0xAeE68Aaa6315959D145Edd2D25877871362907bb",
+    "initialSupply": "1000000000000000000000000000"
+  },
+  "DepositManagerModule": {
+    "treasury": "0xAeE68Aaa6315959D145Edd2D25877871362907bb",
+    "nativeAccepted": false,
+    "usdgToken": "0x9960A800CA3d007cd25b6756151bda71e5aEA936",
+    "usdgMaxAmount": "1000000"
+  },
+  "MockUsdgModule": {
+    "minter": "0x0000000000000000000000000000000000000000"
+  }
+}

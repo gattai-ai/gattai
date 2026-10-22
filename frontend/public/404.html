@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GATTAI</title>
+    <script>
+      // Static hosting (Railway / Nginx / Caddy) tidak memproses rewrites SPA.
+      // Simpan path yang hilang lalu kembali ke app supaya router React bisa
+      // merender halaman 404 branded GATTAI.
+      (function () {
+        try {
+          sessionStorage.setItem(
+            "gattai:redirect",
+            window.location.pathname + window.location.search,
+          );
+        } catch (e) {}
+        window.location.replace("/");
+      })();
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <p>Redirecting…</p>
+      <meta http-equiv="refresh" content="0; url=/" />
+      <p><a href="/">Return to GATTAI</a></p>
+    </noscript>
+  </body>
+</html>

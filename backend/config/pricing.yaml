@@ -1,0 +1,61 @@
+# Tabel harga & pemetaan model.
+# provider-agnostic: recipe hanya menunjuk `model_ref`, model asli diganti di sini.
+#
+# kind = text  → harga per 1 juta token
+# kind = image | video | audio → harga per unit (satu render)
+
+models:
+  claude_primary:
+    provider: anthropic
+    model: claude-sonnet-4-5
+    kind: text
+    input_per_mtok_usd: 3
+    output_per_mtok_usd: 15
+
+  gpt_architect:
+    provider: openai
+    model: gpt-4.1
+    kind: text
+    input_per_mtok_usd: 2
+    output_per_mtok_usd: 8
+
+  sonar_research:
+    provider: perplexity
+    model: sonar-pro
+    kind: text
+    input_per_mtok_usd: 3
+    output_per_mtok_usd: 15
+
+  # MIMO Token Plan (E2E teks). Harga per 1 juta token — sesuaikan dengan
+  # paket Token Plan yang dipakai (subscription ≈ biaya marjinal ~0).
+  mimo_architect:
+    provider: mimo
+    model: mimo-v2.6-flash
+    kind: text
+    input_per_mtok_usd: 0.5
+    output_per_mtok_usd: 1.5
+
+  mimo_primary:
+    provider: mimo
+    model: mimo-v2.6-flash
+    kind: text
+    input_per_mtok_usd: 0.5
+    output_per_mtok_usd: 1.5
+
+  image_default:
+    provider: higgsfield
+    model: nano-banana
+    kind: image
+    unit_usd: 0.04
+
+  video_default:
+    provider: higgsfield
+    model: veo-3.1
+    kind: video
+    unit_usd: 1.5
+
+  video_cheap:
+    provider: higgsfield
+    model: kling-3.0
+    kind: video
+    unit_usd: 0.6

@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "chainId": 4663,
+  "contract": "DepositManager",
+  "address": "0xbf1F9ea84820B619EdC58eD15304Eb22547fBC07",
+  "transactionHash": "0xc8674fb8f6b58ac3a801abff74f8667bfa12ebcec714e1cc34634ff8ace0354f",
+  "blockNumber": 94136017,
+  "receiptStatus": "SUCCESS",
+  "commit": "a9d6d09a093717e613b39a67b90f5a1f4870e897",
+  "branch": "dev",
+  "parameters": {
+    "treasury": "0x5a777DAB051a2D05638b851330E7360C9333B905",
+    "nativeAccepted": false,
+    "usdgToken": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "usdgMaxAmount": "100000000"
+  },
+  "compiler": "0.8.34+commit.80d5c536",
+  "evmVersion": "osaka",
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  },
+  "generatedAt": "2026-10-21T08:19:35.076Z"
+}

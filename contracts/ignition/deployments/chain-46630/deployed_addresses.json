@@ -1,0 +1,6 @@
+{
+  "GattaiModule#DepositManager": "0x31d02e01406bf31dF857fD65865E03d4dD5ab82a",
+  "GattaiModule#GattaiToken": "0x2Ccb82C778442Ee3d2c7e990A394E4A3d3C5B970",
+  "MockUsdgModule#MockUSDG": "0x9960A800CA3d007cd25b6756151bda71e5aEA936",
+  "DepositManagerModule#DepositManager": "0x85052C5Add70D53c49C17519873dB5ECDaED1864"
+}

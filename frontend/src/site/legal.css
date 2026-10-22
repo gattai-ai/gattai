@@ -1,0 +1,23 @@
+/* Vendored from gattai-site/legal.html <style> */
+.lw{display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px;max-width:1100px;margin:0 auto;padding:48px var(--gut) 0}
+.ltabs{position:sticky;top:120px;align-self:start;display:flex;flex-direction:column;gap:4px}
+.ltabs a{padding:10px 14px;border-radius:10px;color:var(--muted);font-size:14.5px;border:1px solid transparent;transition:all .2s}
+.ltabs a:hover{color:var(--text)}
+.ltabs a.on{color:var(--text);background:var(--panel);border-color:var(--line2);box-shadow:inset 2px 0 0 var(--acc)}
+.lpage{display:none;max-width:760px}
+.lpage.on{display:block;animation:introFade .5s var(--ease)}
+.lpage h2{font-weight:600;font-stretch:115%;font-size:clamp(30px,3.6vw,44px);letter-spacing:-.03em;line-height:1.05}
+.lpage .upd{font:500 11px var(--mono);letter-spacing:.12em;color:var(--dim);margin-top:10px;text-transform:uppercase}
+.lpage h3{font-weight:600;font-size:18px;margin:32px 0 8px;display:flex;gap:12px;align-items:baseline}
+.lpage h3 span{font:500 11px var(--mono);color:var(--acc)}
+.lpage p,.lpage li{color:#b9bcc2;font-size:15.5px;line-height:1.7}
+.lpage p{margin-top:10px}
+.lpage ul{margin:10px 0 0 20px}
+.draft{border:1px solid rgba(255,180,143,.35);background:rgba(255,91,31,.07);border-radius:12px;padding:14px 16px;font-size:14px;color:#ffcfb6;margin-bottom:28px;display:flex;gap:12px}
+.draft b{color:#fff}
+.tbd{font:500 12px var(--mono);color:var(--acc2);background:rgba(255,91,31,.1);padding:1px 6px;border-radius:4px}
+@media (max-width:860px){
+  .lw{grid-template-columns:1fr;gap:20px;padding-top:24px}
+  .ltabs{position:relative;top:0;flex-direction:row;overflow-x:auto}
+  .ltabs a{white-space:nowrap}
+}

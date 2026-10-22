@@ -1,0 +1,15 @@
+{
+  "DepositManagerModule": {
+    "treasury": "0x5a777DAB051a2D05638b851330E7360C9333B905",
+    "nativeAccepted": false,
+    "usdgToken": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "usdgMaxAmount": "100000000"
+  },
+  "GattaiModule": {
+    "treasury": "0x0000000000000000000000000000000000000000",
+    "initialSupply": "1000000000000000000000000000",
+    "nativeAccepted": false,
+    "usdgToken": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "usdgMaxAmount": "1000000000"
+  }
+}

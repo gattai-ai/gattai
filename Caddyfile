@@ -1,0 +1,41 @@
+(gattai_site) {
+	root * /srv/gattai
+
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+	}
+
+	handle /api/* {
+		uri strip_prefix /api
+		reverse_proxy backend:3000 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		encode zstd gzip
+
+		header {
+			X-Content-Type-Options "nosniff"
+			X-Frame-Options "DENY"
+			Referrer-Policy "strict-origin-when-cross-origin"
+			Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+			Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; worker-src 'self' blob:; report-uri /api/v1/public/csp-report"
+		}
+
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+beta.gattai.tech {
+	import gattai_site
+}
+
+www.gattai.tech {
+	import gattai_site
+}
+
+gattai.tech {
+	redir https://www.gattai.tech{uri} permanent
+}

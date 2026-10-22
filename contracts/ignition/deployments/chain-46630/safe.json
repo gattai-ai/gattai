@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "chainId": 46630,
+  "safeAddress": "0xAeE68Aaa6315959D145Edd2D25877871362907bb",
+  "owners": [
+    "0x21956BF41857869aed193b899678b8b4AC24e485",
+    "0xB1Ce61a8851Db965034D48Ee39b9d80429d21834",
+    "0x1a6Dd8dB12F6BD6FDC610a9e3727E198ED27Cc71"
+  ],
+  "threshold": 2,
+  "factory": "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+  "singleton": "0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552",
+  "fallbackHandler": "0x0000000000000000000000000000000000000000",
+  "saltNonce": "1792520964449",
+  "transactionHash": "0x2be2402dea6f7dd3eaee16c84ca536f90c132594d640b5cc2a6dd365a075ea13",
+  "blockNumber": 139582967,
+  "gasUsed": "283198",
+  "deployer": "0x911Bf0fd05A53eC2d06952Ee2Fca8b17CBeA3Bad",
+  "version": "1.3.0",
+  "createdAt": "2026-10-20T18:29:33.349Z"
+}

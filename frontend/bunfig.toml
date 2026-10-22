@@ -1,0 +1,3 @@
+[test]
+# Sediakan DOM (happy-dom) untuk test komponen; mirror `backend/bunfig.toml`.
+preload = ["./test/setup.ts"]

@@ -1,0 +1,53 @@
+# Parameter global GATTAI. Semua nilai bisnis ada di sini, bukan di kode.
+# Perubahan harga provider dapat dilakukan tanpa deploy ulang.
+
+pricing:
+  # Markup default bila recipe tidak mendefinisikan markup sendiri.
+  default_markup: 0.35
+
+reserve:
+  # Buffer reservasi di atas estimasi biaya (ditahan sementara).
+  buffer_ratio: 0.2
+  # Nilai minimum reservasi dalam micro-credits (1 credit = 1_000_000 micro).
+  min_micro: 100000
+
+gattai:
+  # Diskon top-up bila membayar menggunakan token $GATTAI.
+  discount_ratio: 0.15
+
+burn:
+  # Porsi margin dari lot ETH/USDG yang dipakai buyback & burn.
+  share_stable: 0.3
+  # Porsi margin dari lot GATTAI yang di-burn langsung dari treasury.
+  share_token: 0.5
+
+deposits:
+  # Batas maksimum nilai deposit (USD) selama likuiditas masih rendah.
+  cap_usd: 100
+  # Jendela TWAP harga GATTAI (menit), bukan harga spot.
+  twap_window_minutes: 30
+
+context:
+  # Total karakter riwayat percakapan sebelum diringkas (menekan biaya token).
+  summary_threshold_chars: 12000
+  # Jumlah pesan terakhir yang dikirim verbatim ke step `execute`. Turn yang
+  # lebih lama diwakili ringkasan di atas, supaya biaya token tidak tumbuh
+  # seiring panjang percakapan.
+  history_window_messages: 10
+
+trial:
+  # Kuota gratis selalu dipakai LEBIH DULU untuk semua wallet (bukan hanya saat
+  # saldo kurang), termasuk formasi media.
+  # Jumlah run gratis per wallet (hanya yang menghasilkan output).
+  # Fase 1 public beta: 3 run teks. Bisa di-override lewat TRIAL_FREE_RUNS.
+  free_runs: 3
+  # Batas total percobaan, termasuk yang gagal dan di-refund. Penjaga biaya
+  # platform: tanpa ini, run gagal bisa diulang tanpa batas dengan biaya provider.
+  # Fase 1 public beta: 10 percobaan. Bisa di-override lewat TRIAL_MAX_ATTEMPTS.
+  max_attempts: 10
+  # Jatah gratis untuk formasi media. Video ≈ USD 1,5/run sementara teks ≈
+  # USD 0,006, jadi media dibatasi terpisah. Dihitung dari PERCOBAAN (bukan run
+  # yang berhasil) supaya refund run gagal tidak memulihkan jatah ini.
+  # Fase 1 public beta: 0 (media selalu berbayar). Jangan dinaikkan tanpa
+  # persetujuan risiko biaya provider.
+  free_media_attempts: 0

@@ -1,0 +1,4 @@
+# Cloudflare Pages / Netlify: fallback untuk Single Page App.
+# Tanpa baris di bawah, path seperti /about akan 404 saat dimuat langsung
+# (refresh atau dibuka dari bookmark), bukan lagi diteruskan ke index.html.
+/*    /index.html   200
