@@ -39,15 +39,15 @@ trial:
   # Kuota gratis selalu dipakai LEBIH DULU untuk semua wallet (bukan hanya saat
   # saldo kurang), termasuk formasi media.
   # Jumlah run gratis per wallet (hanya yang menghasilkan output).
-  # Fase 1 public beta: 3 run teks. Bisa di-override lewat TRIAL_FREE_RUNS.
-  free_runs: 3
+  # Public beta: 10 run teks. Bisa di-override lewat TRIAL_FREE_RUNS.
+  free_runs: 10
   # Batas total percobaan, termasuk yang gagal dan di-refund. Penjaga biaya
   # platform: tanpa ini, run gagal bisa diulang tanpa batas dengan biaya provider.
-  # Fase 1 public beta: 10 percobaan. Bisa di-override lewat TRIAL_MAX_ATTEMPTS.
-  max_attempts: 10
+  # Public beta: 30 percobaan. Bisa di-override lewat TRIAL_MAX_ATTEMPTS.
+  max_attempts: 30
   # Jatah gratis untuk formasi media. Video ≈ USD 1,5/run sementara teks ≈
   # USD 0,006, jadi media dibatasi terpisah. Dihitung dari PERCOBAAN (bukan run
   # yang berhasil) supaya refund run gagal tidak memulihkan jatah ini.
-  # Fase 1 public beta: 0 (media selalu berbayar). Jangan dinaikkan tanpa
-  # persetujuan risiko biaya provider.
+  # Public beta: 0 (media selalu berbayar). Jangan dinaikkan tanpa guard
+  # produksi, anti-abuse, dan persetujuan risiko biaya provider.
   free_media_attempts: 0
