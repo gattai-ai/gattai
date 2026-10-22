@@ -28,10 +28,6 @@
 	}
 }
 
-beta.gattai.tech {
-	import gattai_site
-}
-
 www.gattai.tech {
 	import gattai_site
 }
