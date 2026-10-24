@@ -174,4 +174,29 @@ describe("LeaderboardPage", () => {
     await waitFor(() => expect(optOutBodies).toHaveLength(1));
     expect(optOutBodies[0]).toBe(JSON.stringify({ opted_out: false }));
   });
+
+  test("user dengan holder tier menampilkan badge tier di panel rank pribadi dan tabel", async () => {
+    const meWithTier: LeaderboardMeResponse = {
+      week: CURRENT_WEEK,
+      me: {
+        rank: 1,
+        runs: 42,
+        opted_out: false,
+        display_name: "Project abcd",
+        tier: { id: "commander", name: "Commander" },
+      },
+    };
+
+    globalThis.fetch = (async (input: string | URL | Request) => {
+      const url = new URL(String(input), "http://localhost");
+      if (url.pathname.endsWith("/v1/public/leaderboard")) return json(BOARD);
+      if (url.pathname.endsWith("/v1/leaderboard/me")) return json(meWithTier);
+      throw new Error(`permintaan tak terduga: ${url.pathname}`);
+    }) as typeof fetch;
+
+    renderBoard({ projectId: "prj_test", address: "0xabcdef" });
+
+    await screen.findByText("#1");
+    expect(screen.getAllByText(/Commander/i).length).toBeGreaterThanOrEqual(1);
+  });
 });

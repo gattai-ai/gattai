@@ -269,6 +269,7 @@ export interface LeaderboardMe {
   runs: number;
   opted_out: boolean;
   display_name: string;
+  tier?: { id: string; name: string } | null;
 }
 
 /** GET /v1/public/leaderboard — `me` selalu null karena response di-cache. */

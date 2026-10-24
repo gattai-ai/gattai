@@ -211,6 +211,9 @@ export function LeaderboardPage() {
                     <span className="lb-name">
                       {entry.display_name}
                       {isMe(entry) ? <span className="lb-you">You</span> : null}
+                      {isMe(entry) && meData?.tier ? (
+                        <span className="lb-entry-tier">{meData.tier.name}</span>
+                      ) : null}
                     </span>
                     <span className="lb-runs">{entry.runs.toLocaleString("en-US")}</span>
                   </div>
@@ -242,6 +245,11 @@ export function LeaderboardPage() {
                   {meData.runs.toLocaleString("en-US")} settled run
                   {meData.runs === 1 ? "" : "s"} {week === "previous" ? "last week" : "this week"}
                 </p>
+                {meData.tier ? (
+                  <div className={`lb-tier-badge tier-${meData.tier.id}`}>
+                    ★ {meData.tier.name}
+                  </div>
+                ) : null}
                 <p className="lb-me-name">{meData.display_name}</p>
                 {meData.opted_out ? (
                   <p className="lb-note">

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireProject } from "../middleware/auth";
+import { getHolderStatus } from "../holder/service";
 import {
   getLeaderboardRanking,
   isProjectOptedOut,
@@ -28,6 +29,16 @@ leaderboardRoutes.get("/me", async (c) => {
   const stat = ranking.stats.find((entry) => entry.projectId === project.id);
   const optedOut = stat?.optedOut ?? (await isProjectOptedOut(project.id));
 
+  let tier: { id: string; name: string } | null = null;
+  try {
+    const holderStatus = await getHolderStatus(project.ownerWallet, project.id);
+    if (holderStatus.tier) {
+      tier = { id: holderStatus.tier.id, name: holderStatus.tier.name };
+    }
+  } catch {
+    // Abaikan error snapshot/RPC agar leaderboard tetap responsif
+  }
+
   return c.json({
     week: serializeWeek(window),
     me: {
@@ -35,6 +46,7 @@ leaderboardRoutes.get("/me", async (c) => {
       runs: stat?.runs ?? 0,
       opted_out: optedOut,
       display_name: leaderboardDisplayName(project.id),
+      tier,
     },
   });
 });

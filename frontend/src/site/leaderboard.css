@@ -25,6 +25,11 @@
 .lb-rank{font:500 12px var(--mono);color:var(--dim);font-variant-numeric:tabular-nums}
 .lb-name{min-width:0;overflow-wrap:anywhere;font-weight:500}
 .lb-you{display:inline-flex;margin-left:8px;padding:2px 6px;border:1px solid rgba(255,91,31,.45);border-radius:999px;font:600 9px var(--mono);letter-spacing:.1em;color:var(--acc2);vertical-align:2px}
+.lb-entry-tier{display:inline-flex;margin-left:6px;padding:2px 6px;border-radius:4px;font:600 9px var(--mono);letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.05);color:var(--dim);border:1px solid var(--line);vertical-align:2px}
+.lb-tier-badge{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:4px 10px;border-radius:999px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line)}
+.lb-tier-badge.tier-pilot{background:rgba(205,127,50,.12);border-color:rgba(205,127,50,.45);color:#d49b6a}
+.lb-tier-badge.tier-commander{background:rgba(192,192,192,.12);border-color:rgba(192,192,192,.45);color:#e0e0e0}
+.lb-tier-badge.tier-admiral{background:rgba(255,215,0,.12);border-color:rgba(255,215,0,.45);color:#ffd700}
 .lb-runs{text-align:right;font:600 14px var(--mono);font-variant-numeric:tabular-nums}
 .lb-empty{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:44px 18px;color:var(--muted)}
 .lb-empty p{max-width:440px;font-size:14px}
