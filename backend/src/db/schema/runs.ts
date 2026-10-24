@@ -45,6 +45,10 @@ export const runs = pgTable(
     chargedMicro: bigint("charged_micro", { mode: "number" }).notNull().default(0),
     /** Run ini dibiayai kuota trial gratis, bukan credit berbayar. */
     isTrial: boolean("is_trial").notNull().default(false),
+    /** Run ini dibiayai kuota tier holder gratis. */
+    isHolder: boolean("is_holder").notNull().default(false),
+    /** ID tier yang membiayai run ini (pilot | commander | admiral). */
+    holderTier: text("holder_tier"),
     providerCostUsd: numeric("provider_cost_usd", { precision: 24, scale: 8 })
       .notNull()
       .default("0"),
@@ -71,6 +75,10 @@ export const runs = pgTable(
     // Daftar riwayat percakapan join ke `runs.conversation_id`; tanpa index ini
     // query daftar jadi seq-scan begitu tabel run membesar.
     index("runs_conversation_idx").on(table.conversationId),
+    // Agregasi leaderboard menyaring status + rentang finished_at.
+    index("runs_status_finished_idx").on(table.status, table.finishedAt),
+    // Query pemakaian holder harian menyaring projectId + isHolder + createdAt.
+    index("runs_project_holder_idx").on(table.projectId, table.isHolder, table.createdAt),
   ],
 );
 

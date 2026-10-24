@@ -43,4 +43,14 @@
 .verify .n{font:500 11px var(--mono);color:var(--acc)}
 .verify h3{font-weight:600;font-size:19px;margin-top:10px;letter-spacing:-.01em}
 .tx{color:var(--acc2)}
+/* Tabel burn berubah menjadi kartu di layar sempit (360px tetap terbaca). */
+@media (max-width:600px){
+  .burn-table thead{display:none}
+  .burn-table,.burn-table tbody,.burn-table tr,.burn-table td{display:block;width:100%}
+  .burn-table tr{border:1px solid var(--line2);border-radius:12px;padding:8px 12px;margin-bottom:10px;background:var(--panel2)}
+  .burn-table td{border:0;padding:7px 0;display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:right}
+  .burn-table td::before{content:attr(data-label);font:500 10px var(--mono);letter-spacing:.12em;color:var(--dim);text-transform:uppercase;text-align:left;flex:0 0 auto}
+  .burn-table td.num{text-align:right}
+}
 @media (max-width:1000px){ .bhero,.calc{grid-template-columns:1fr} .stats{grid-template-columns:1fr 1fr} .verify{grid-template-columns:1fr} }
+@media (max-width:520px){ .stats{grid-template-columns:1fr} .bigN{font-size:48px} .next .cd b{font-size:22px} }

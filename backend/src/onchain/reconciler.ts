@@ -1,11 +1,11 @@
 import type { PublicClient } from "viem";
-import { pool } from "../db";
 import { env } from "../env";
 import { createRobinhoodClient } from "./client";
 import { buildIngestConfig } from "./config";
 import { loadCursor, saveCursor } from "./cursor";
 import { deadLetterFromEvent } from "./dead-letter";
 import { createDepositIndexer, type DepositIndexer } from "./indexer";
+import { acquireLeaderLock } from "./lock";
 import { retryPendingDeposits } from "./pending";
 import { reconcileReorgs } from "./reorg";
 
@@ -46,7 +46,7 @@ export async function startDepositReconciler(): Promise<DepositIndexer | null> {
   }
 
   // P1.3: hanya satu proses yang menjalankan reconciler (single-leader).
-  const lock = await acquireLeaderLock();
+  const lock = await acquireLeaderLock(LOCK_KEY);
   if (!lock) {
     console.log(
       "[startup] deposit reconciler: instance lain sudah memegang kunci; reconciler dilewati.",
@@ -169,34 +169,6 @@ async function runReorgCheck(
   } catch (error) {
     logError(error);
   }
-}
-
-/** Ambil advisory lock pada satu koneksi khusus yang ditahan selama proses hidup. */
-async function acquireLeaderLock(): Promise<{ release: () => Promise<void> } | null> {
-  const client = await pool.connect();
-  try {
-    const result = await client.query<{ locked: boolean }>(
-      "select pg_try_advisory_lock($1) as locked",
-      [LOCK_KEY],
-    );
-    if (!result.rows[0]?.locked) {
-      client.release();
-      return null;
-    }
-  } catch (error) {
-    client.release();
-    throw error;
-  }
-
-  return {
-    release: async () => {
-      try {
-        await client.query("select pg_advisory_unlock($1)", [LOCK_KEY]);
-      } finally {
-        client.release();
-      }
-    },
-  };
 }
 
 /** Logger yang menekan pesan berulang dalam satu jendela waktu (anti-spam). */

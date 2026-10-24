@@ -1,0 +1,339 @@
+/* Halaman Statistik Publik /stats */
+.stats-page {
+  padding: 132px 0 96px;
+}
+
+.stats-hero {
+  position: relative;
+}
+
+.stats-hero .lede {
+  max-width: 680px;
+}
+
+.stats-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  font: 500 11px var(--mono);
+  letter-spacing: .08em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.stats-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 4px rgba(127, 209, 160, .12);
+}
+
+.stats-sep {
+  color: var(--line2);
+}
+
+/* Bagian section */
+.stats-section {
+  margin-top: 56px;
+}
+
+.stats-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line2);
+}
+
+.stats-section-head h2 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+
+.stats-updated {
+  font: 500 11px var(--mono);
+  color: var(--dim);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+/* Grid kartu */
+.stats-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.stats-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.stats-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.stats-card {
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stats-card-label {
+  font: 500 11px var(--mono);
+  letter-spacing: .1em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.stats-card-num {
+  font-weight: 650;
+  font-stretch: 110%;
+  font-size: clamp(28px, 3.2vw, 38px);
+  line-height: 1.1;
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 10px;
+  color: var(--text);
+}
+
+.stats-card-sub {
+  font: 500 12px var(--mono);
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* Banner jujur empty state */
+.stats-honest-note {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 91, 31, .06);
+  border: 1px solid rgba(255, 91, 31, .25);
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Contracts */
+.stats-contracts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.stats-contract-card {
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.stats-contract-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stats-contract-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.stats-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font: 600 10px var(--mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.stats-badge.ok {
+  background: rgba(127, 209, 160, .14);
+  color: var(--ok);
+  border: 1px solid rgba(127, 209, 160, .35);
+}
+
+.stats-badge.warn {
+  background: rgba(255, 209, 102, .14);
+  color: #ffd166;
+  border: 1px solid rgba(255, 209, 102, .35);
+}
+
+.stats-badge.dim {
+  background: rgba(255, 255, 255, .06);
+  color: var(--dim);
+  border: 1px solid var(--line);
+}
+
+.stats-contract-addr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font: 500 12px var(--mono);
+  color: var(--muted);
+}
+
+.stats-contract-addr a {
+  color: var(--dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-contract-addr a:hover {
+  color: var(--text);
+}
+
+/* Chart Container */
+.stats-chart-card {
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 22px;
+  margin-top: 20px;
+}
+
+.stats-chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.stats-chart-title {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -.01em;
+}
+
+.stats-chart-meta {
+  font: 500 11px var(--mono);
+  color: var(--dim);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.stats-svg-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.stats-svg-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 520px;
+}
+
+/* Formations breakdown table/list */
+.stats-formation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.stats-formation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .02);
+  border: 1px solid var(--line);
+}
+
+.stats-formation-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats-formation-name {
+  font-weight: 550;
+  font-size: 14px;
+}
+
+.stats-formation-id {
+  font: 500 11px var(--mono);
+  color: var(--dim);
+}
+
+.stats-formation-count {
+  font: 600 14px var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  .stats-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stats-contracts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid-3,
+  .stats-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .stats-page {
+    padding: 112px 0 64px;
+  }
+  .stats-section {
+    margin-top: 40px;
+  }
+  .stats-grid-4 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .stats-card,
+  .stats-contract-card,
+  .stats-chart-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .stats-card-num {
+    font-size: 26px;
+  }
+  .stats-svg-wrap svg {
+    min-width: 380px;
+  }
+}

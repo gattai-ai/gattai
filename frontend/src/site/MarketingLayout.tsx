@@ -14,7 +14,13 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
     ? "docs"
     : matchPath(location, "/burns")
       ? "burns"
-      : null;
+      : matchPath(location, "/holders")
+        ? "holders"
+        : matchPath(location, "/leaderboard")
+          ? "leaderboard"
+          : matchPath(location, "/stats")
+            ? "stats"
+            : null;
 
   // Tutup menu mobile setiap pindah rute.
   useEffect(() => {
@@ -80,6 +86,18 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
             <Link to="/burns" className={current === "burns" ? "cur" : undefined}>
               Burns
             </Link>
+            <Link to="/holders" className={current === "holders" ? "cur" : undefined}>
+              Holders
+            </Link>
+            <Link
+              to="/leaderboard"
+              className={current === "leaderboard" ? "cur" : undefined}
+            >
+              Leaderboard
+            </Link>
+            <Link to="/stats" className={current === "stats" ? "cur" : undefined}>
+              Stats
+            </Link>
             <Link to="/#token">$GATTAI</Link>
             <Link to="/#faq">FAQ</Link>
           </div>
@@ -120,6 +138,15 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
         <Link to="/burns" onClick={() => setMenuOpen(false)}>
           Burns
         </Link>
+        <Link to="/holders" onClick={() => setMenuOpen(false)}>
+          Holders
+        </Link>
+        <Link to="/leaderboard" onClick={() => setMenuOpen(false)}>
+          Leaderboard
+        </Link>
+        <Link to="/stats" onClick={() => setMenuOpen(false)}>
+          Stats
+        </Link>
         <Link to="/#token" onClick={() => setMenuOpen(false)}>
           $GATTAI
         </Link>
@@ -151,10 +178,12 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
               <Link to="/docs">Docs</Link>
               <Link to="/#recipes">Formations</Link>
               <Link to="/app/keys">API keys</Link>
+              <Link to="/stats">Stats</Link>
             </div>
             <div>
               <h6>Token</h6>
               <Link to="/burns">Burn dashboard</Link>
+              <Link to="/holders">Holder tiers</Link>
               <Link to="/#token">$GATTAI</Link>
               <Link to="/#roadmap">Roadmap</Link>
               <Link to="/burns#contract">Explorer (contract)</Link>

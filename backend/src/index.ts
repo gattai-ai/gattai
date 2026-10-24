@@ -4,6 +4,7 @@ import app from "./app";
 import { assertProductionConfig, env, missingProviderKeys } from "./env";
 import { syncRecipes } from "./orchestration/create-run";
 import { startReaper } from "./orchestration/reap";
+import { startBurnIndexer } from "./burn/indexer";
 import { startDepositReconciler } from "./onchain/reconciler";
 import { ensureProjectOnchainIds } from "./services/projects";
 
@@ -70,10 +71,37 @@ if (!process.env.DATABASE_URL) {
 
   // Reconciler deposit (Fase 2): kredit deposit yang lolos jalur confirm instan
   // (user menutup tab / confirm gagal sesaat). Non-fatal.
-  startDepositReconciler().catch((error) =>
-    console.warn(
-      "[startup] gagal memulai deposit reconciler:",
-      error instanceof Error ? error.message : error,
-    ),
-  );
+  let depositIndexer: { stop: () => void } | null = null;
+  let burnIndexer: { stop: () => void } | null = null;
+
+  startDepositReconciler()
+    .then((indexer) => {
+      depositIndexer = indexer;
+    })
+    .catch((error) =>
+      console.warn(
+        "[startup] gagal memulai deposit reconciler:",
+        error instanceof Error ? error.message : error,
+      ),
+    );
+
+  // Burn indexer (Fase 1): transfer token GATTAI ke dead address.
+  startBurnIndexer()
+    .then((indexer) => {
+      burnIndexer = indexer;
+    })
+    .catch((error) =>
+      console.warn(
+        "[startup] gagal memulai burn indexer:",
+        error instanceof Error ? error.message : error,
+      ),
+    );
+
+  const shutdown = () => {
+    depositIndexer?.stop();
+    burnIndexer?.stop();
+    process.exit(0);
+  };
+  process.once("SIGTERM", shutdown);
+  process.once("SIGINT", shutdown);
 }

@@ -30,6 +30,9 @@ services:
         condition: service_healthy
     expose:
       - "3000"
+    volumes:
+      # Shell SPA untuk injeksi meta OG /run/:slug (read-only).
+      - ./frontend/dist:/srv/gattai:ro
     healthcheck:
       test:
         [

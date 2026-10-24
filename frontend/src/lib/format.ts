@@ -1,4 +1,4 @@
-/** Pemformat tampilan untuk tanggal dan alamat. */
+/** Pemformat tampilan untuk tanggal, alamat, dan angka uang. */
 
 /**
  * Tanggal + jam ringkas, berbahasa Inggris (mis. `Oct 18, 9:04 AM`).
@@ -38,4 +38,24 @@ export function shortenAddress(address: string | null | undefined, size = 4): st
   if (!address) return "-";
   if (address.length <= size * 2 + 3) return address;
   return `${address.slice(0, size + 2)}…${address.slice(-size)}`;
+}
+
+/**
+ * String credits dari API (mis. `"42.000000"`) → tampilan ringkas.
+ * Nilai tetap dibaca sebagai string; konversi ke Number hanya untuk locale UI.
+ */
+export function formatCredits(value: string | number): string {
+  const amount = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(amount)) return String(value);
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Durasi langkah dalam detik satu desimal; `-` bila belum ada. */
+export function formatDuration(ms: number | null | undefined): string {
+  if (ms == null || !Number.isFinite(ms)) return "-";
+  if (ms < 1000) return `${Math.max(0, Math.round(ms))}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
 }

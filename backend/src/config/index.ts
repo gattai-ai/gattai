@@ -49,6 +49,12 @@ const stepSchema = z.object({
   label: z.string().min(1),
   /** Nama role yang tampil ke pengguna; orkestrasi tetap memakai `role`. */
   role_label: z.string().min(1),
+  /**
+   * Label role untuk halaman publik `/run/:slug`. Dipisah dari `role_label`
+   * supaya istilah internal (mis. `write_report`) bisa tetap dipakai di app
+   * tanpa ikut bocor ke halaman share. Opsional: fallback ke `role_label`.
+   */
+  public_role: z.string().min(1).optional(),
   input_from: z.string().optional(),
   output_schema: z.string().optional(),
   async: z.boolean().optional(),
@@ -73,6 +79,18 @@ const recipeSchema = z.object({
 });
 
 const recipesFileSchema = z.object({ recipes: z.array(recipeSchema).min(1) });
+
+// ── Holder Tiers ─────────────────────────────────────────────────────────────
+
+const holderTierSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  min_tokens: z.string().min(1),
+  free_runs_per_day: z.number().int().nonnegative(),
+  free_media_per_day: z.number().int().nonnegative().default(0),
+  badge: z.enum(["bronze", "silver", "gold"]),
+  perks: z.array(z.string()),
+});
 
 // ── Params ───────────────────────────────────────────────────────────────────
 
@@ -111,6 +129,67 @@ const paramsSchema = z.object({
       free_media_attempts: z.number().int().nonnegative(),
     })
     .default({ free_runs: 10, max_attempts: 30, free_media_attempts: 2 }),
+  holder: z
+    .object({
+      // Kill switch global untuk run tier holder.
+      enabled: z.boolean().default(true),
+      // Batas anggaran platform harian (USD) untuk subsidi run holder.
+      daily_budget_usd: z.number().nonnegative().default(50),
+      // Interval snapshot saldo onchain (jam).
+      snapshot_interval_hours: z.number().int().positive().default(24),
+      // Jumlah snapshot berurutan yang harus memenuhi threshold agar tier aktif.
+      consecutive_snapshots_required: z.number().int().positive().default(2),
+      // Definisi tingkatan tier holder.
+      tiers: z.array(holderTierSchema).min(1),
+    })
+    .default({
+      enabled: true,
+      daily_budget_usd: 50,
+      snapshot_interval_hours: 24,
+      consecutive_snapshots_required: 2,
+      tiers: [
+        {
+          id: "pilot",
+          name: "Pilot",
+          min_tokens: "10000",
+          free_runs_per_day: 5,
+          free_media_per_day: 0,
+          badge: "bronze",
+          perks: [
+            "5 free text runs every day",
+            "Access to core AI formations",
+            "Standard processing priority",
+          ],
+        },
+        {
+          id: "commander",
+          name: "Commander",
+          min_tokens: "50000",
+          free_runs_per_day: 15,
+          free_media_per_day: 1,
+          badge: "silver",
+          perks: [
+            "15 free text runs every day",
+            "1 free media generation every day",
+            "High processing priority",
+          ],
+        },
+        {
+          id: "admiral",
+          name: "Fleet Admiral",
+          min_tokens: "250000",
+          free_runs_per_day: 40,
+          free_media_per_day: 5,
+          badge: "gold",
+          perks: [
+            "40 free text runs every day",
+            "5 free media generations every day",
+            "VIP processing priority",
+            "Early access to upcoming formations",
+          ],
+        },
+      ],
+    }),
 });
 
 // ── Tipe hasil ───────────────────────────────────────────────────────────────
@@ -121,6 +200,7 @@ export type ModelConfig = z.infer<typeof modelSchema>;
 export type RecipeStep = z.infer<typeof stepSchema>;
 export type RecipeConfig = z.infer<typeof recipeSchema>;
 export type RecipePricing = z.infer<typeof recipePricingSchema>;
+export type HolderTierConfig = z.infer<typeof holderTierSchema>;
 export type Params = z.infer<typeof paramsSchema>;
 
 export interface AppConfig {
@@ -194,6 +274,12 @@ export function loadConfig(): AppConfig {
   const models = pricingFileSchema.parse(readYaml("pricing.yaml")).models;
   const rawParams = paramsSchema.parse(readYaml("params.yaml"));
 
+  const enabledEnv = process.env.HOLDER_RUNS_ENABLED;
+  const holderEnabled =
+    enabledEnv !== undefined
+      ? enabledEnv !== "false" && enabledEnv !== "0"
+      : rawParams.holder.enabled;
+
   // Override per environment. Jangan mengubah `params.yaml` hanya untuk
   // menaikkan kuota test; biarkan default produksi tetap konservatif.
   const params = paramsSchema.parse({
@@ -205,6 +291,10 @@ export function loadConfig(): AppConfig {
         "TRIAL_FREE_MEDIA_ATTEMPTS",
         rawParams.trial.free_media_attempts,
       ),
+    },
+    holder: {
+      ...rawParams.holder,
+      enabled: holderEnabled,
     },
   });
 

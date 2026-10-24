@@ -89,9 +89,13 @@ ETH / USDG    $GATTAI
 
 **Phase 1 scope:**
 
-1. **USDG only.** ETH path exists in the contract (`nativeAccepted`) but is deployed with `nativeAccepted: false`. $GATTAI deposits are disabled — the token and TWAP pool are not live on mainnet.
+1. **USDG only.** ETH path exists in the contract (`nativeAccepted`) but is deployed with `nativeAccepted: false`. $GATTAI deposits and the TWAP discount remain disabled in Phase 1 even though the token is live on mainnet.
 2. **15 % GATTAI discount** is configurable in the backend but inactive in Phase 1.
-3. **Burn records** will be exposed at `GET /v1/public/burns` when epochs run. An empty response means no epoch has executed — not that burns happened silently.
+3. **Burn records** are indexed from onchain `Transfer` events to the dead address and exposed at `GET /v1/public/burns`. The response separates `team`, `epoch`, and `community` burns and includes exact base-unit strings.
+4. **Public run shares** live at `/run/:slug`. The backend renders crawler-visible meta and a 1200×630 OG image, while `GET /v1/public/runs/:slug` exposes only the formation, optional prompt, output, public step labels, and charged cost. Wallet, balance, API key, provider cost, and internal IDs are never included.
+5. **Weekly leaderboard** lives at `/leaderboard`. It ranks settled runs with a 200-run/project/day UTC cap, excludes team/treasury/internal wallets, shows the top 20, and exposes a private rank via `GET /v1/leaderboard/me`. Projects can opt out without exposing wallets or internal IDs.
+6. **Public stats** live at `/stats` and `GET /v1/public/stats`. It aggregates settled run usage, USDG deposit volume, settled credits/USD revenue, onchain burns (consistent with `/burns`), and smart contract paused status with Blockscout links.
+7. **Holder Tiers** live at `/holders`. Wallet holders of $GATTAI receive daily free AI run quotas across three tiers (Pilot: 10k tokens → 5 runs/day, Commander: 50k tokens → 15 text + 1 media/day, Fleet Admiral: 250k tokens → 40 text + 5 media/day). Anti-dumping is enforced via 2-consecutive-snapshot verification ($\min(S_N, S_{N-1})$). Quotas reset at 00:00 UTC with a daily protocol budget cap and emergency kill-switch. Public tiers are exposed at `GET /v1/public/holder/tiers` and authenticated status at `GET /v1/holder/status`.
 
 ---
 
@@ -127,6 +131,8 @@ curl https://www.gattai.tech/api/v1/chat/completions \
 ```
 POST   /v1/runs                  Start an async formation job
 GET    /v1/runs/:id/events       SSE stream — progress + token deltas
+POST   /v1/runs/:id/share        Create/refresh a public run link
+GET    /v1/public/runs/:slug     Read a shared run (no auth)
 POST   /v1/deposits/confirm      Confirm an on-chain top-up
 ```
 

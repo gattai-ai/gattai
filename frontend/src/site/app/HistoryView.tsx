@@ -10,6 +10,7 @@ import { formatShortDateTime } from "@/lib/format";
 import { ApiError } from "@/lib/api";
 import { errorMessage } from "@/lib/error-message";
 import { NeedLogin } from "./AppShell";
+import { ShareDialog } from "./ShareDialog";
 import type { ConversationSummary } from "@/lib/types";
 
 /**
@@ -66,6 +67,8 @@ export function HistoryView() {
   const [removingId, setRemovingId] = useState<string | null>(null);
   /** Pesan error inline, terikat pada satu baris. */
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
+  /** Run terbaru yang dialog share-nya terbuka. */
+  const [shareRun, setShareRun] = useState<{ runId: string; title: string } | null>(null);
 
   // Ketikan cepat tidak boleh memicu satu request per huruf.
   useEffect(() => {
@@ -265,6 +268,18 @@ export function HistoryView() {
                       </span>
                     </button>
                     <div className="chacts">
+                      {item.latest_settled_run_id ? (
+                        <button
+                          className="chact"
+                          title="Share the latest settled run"
+                          aria-label={`Share ${title}`}
+                          onClick={() =>
+                            setShareRun({ runId: item.latest_settled_run_id!, title })
+                          }
+                        >
+                          {item.share ? "Shared" : "Share"}
+                        </button>
+                      ) : null}
                       <button
                         className="chact"
                         title="Rename"
@@ -302,6 +317,14 @@ export function HistoryView() {
           </div>
         ) : null}
       </div>
+
+      {shareRun ? (
+        <ShareDialog
+          runId={shareRun.runId}
+          title={shareRun.title}
+          onClose={() => setShareRun(null)}
+        />
+      ) : null}
     </section>
   );
 }

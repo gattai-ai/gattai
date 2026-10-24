@@ -38,6 +38,12 @@ type EnvKey =
   | "GATTAI_TWAP_POOL"
   | "GATTAI_TOKEN_ADDRESS"
   | "BURN_EXECUTE"
+  | "BURN_TOKEN_ADDRESS"
+  | "BURN_INDEXER_ENABLED"
+  | "BURN_INDEXER_FROM_BLOCK"
+  | "BURN_CONFIRMATIONS"
+  | "TEAM_BURN_WALLETS"
+  | "BURN_DEAD_ADDRESSES"
   | "ALLOW_MANUAL_PRICES"
   | "ALLOW_UNVERIFIED_USDG"
   | "INDEXER_REORG_LOOKBACK"
@@ -65,6 +71,12 @@ const KEYS: EnvKey[] = [
   "GATTAI_TWAP_POOL",
   "GATTAI_TOKEN_ADDRESS",
   "BURN_EXECUTE",
+  "BURN_TOKEN_ADDRESS",
+  "BURN_INDEXER_ENABLED",
+  "BURN_INDEXER_FROM_BLOCK",
+  "BURN_CONFIRMATIONS",
+  "TEAM_BURN_WALLETS",
+  "BURN_DEAD_ADDRESSES",
   "ALLOW_MANUAL_PRICES",
   "ALLOW_UNVERIFIED_USDG",
   "INDEXER_REORG_LOOKBACK",
@@ -325,6 +337,50 @@ describe("preflight produksi mainnet", () => {
   test("BURN_EXECUTE aktif di Phase 1 → gagal", () => {
     withPatchedEnv({ ...base, BURN_EXECUTE: "true" }, () => {
       expect(() => assertProductionConfig()).toThrow("BURN_EXECUTE");
+    });
+  });
+
+  const burnBase: Partial<Record<EnvKey, string | undefined>> = {
+    ...base,
+    ROBINHOOD_RPC_URL: "https://rpc.mainnet.chain.robinhood.com",
+    BURN_TOKEN_ADDRESS: "0x863019e2e676164fcfaab6e14dcd6568eb6deb1f",
+    BURN_INDEXER_ENABLED: "true",
+    BURN_INDEXER_FROM_BLOCK: "96177892",
+    BURN_CONFIRMATIONS: "60",
+    TEAM_BURN_WALLETS: "0xca39f6f2aff53659e072da95537ba2f818a6890a",
+    BURN_DEAD_ADDRESSES: "0x000000000000000000000000000000000000dEaD",
+  };
+
+  test("burn indexer mainnet lengkap → lolos", () => {
+    withPatchedEnv(burnBase, () => {
+      expect(() => assertProductionConfig()).not.toThrow();
+    });
+  });
+
+  test("BURN_INDEXER_ENABLED=true tanpa BURN_TOKEN_ADDRESS → gagal", () => {
+    withPatchedEnv(
+      { ...burnBase, BURN_TOKEN_ADDRESS: undefined, BURN_INDEXER_ENABLED: "true" },
+      () => {
+        expect(() => assertProductionConfig()).toThrow("BURN_TOKEN_ADDRESS");
+      },
+    );
+  });
+
+  test("BURN_CONFIRMATIONS kurang dari 60 → gagal", () => {
+    withPatchedEnv({ ...burnBase, BURN_CONFIRMATIONS: "59" }, () => {
+      expect(() => assertProductionConfig()).toThrow("BURN_CONFIRMATIONS");
+    });
+  });
+
+  test("BURN_INDEXER_FROM_BLOCK kosong → gagal", () => {
+    withPatchedEnv({ ...burnBase, BURN_INDEXER_FROM_BLOCK: undefined }, () => {
+      expect(() => assertProductionConfig()).toThrow("BURN_INDEXER_FROM_BLOCK");
+    });
+  });
+
+  test("TEAM_BURN_WALLETS bukan alamat valid → gagal", () => {
+    withPatchedEnv({ ...burnBase, TEAM_BURN_WALLETS: "not-an-address" }, () => {
+      expect(() => assertProductionConfig()).toThrow("TEAM_BURN_WALLETS");
     });
   });
 

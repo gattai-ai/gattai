@@ -58,10 +58,10 @@ describe("header keamanan & cache", () => {
     expect(res.headers.get("referrer-policy")).toBe("no-referrer");
   });
 
-  test("endpoint publik tidak dipaksa no-store", async () => {
+  test("endpoint publik memakai cache singkat, bukan no-store", async () => {
     const res = await app.request("/v1/public/burns");
     expect(res.status).toBe(200);
-    expect(res.headers.get("cache-control")).toBeNull();
+    expect(res.headers.get("cache-control")).toBe("public, max-age=60, stale-while-revalidate=30");
   });
 });
 

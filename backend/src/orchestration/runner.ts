@@ -10,6 +10,7 @@ import { db } from "../db";
 import { runSteps, runs } from "../db/schema";
 import { chargeMicroFromProviderCost, estimateRecipe, resolveMarkup } from "../billing/estimate";
 import { release, reserve, settleRun } from "../billing/ledger";
+import { recordHolderCost } from "../holder/service";
 import { env } from "../env";
 import { newId } from "../lib/id";
 import {
@@ -27,6 +28,7 @@ import {
   getConversationContext,
   maybeRefreshSummary,
 } from "../services/conversations";
+import { getProjectById } from "../services/projects";
 import {
   GATTAI_SYSTEM,
   REVIEWER_SYSTEM,
@@ -338,10 +340,10 @@ export async function executeRun(runId: string, opts: ExecuteOptions = {}): Prom
   }
 
   // ── Reservasi ──────────────────────────────────────────────────────────────
-  // Run trial dilewati: tidak ada credit untuk ditahan, dan biaya provider
-  // ditanggung kuota gratis.
+  // Run trial dan holder dilewati: tidak ada credit untuk ditahan, dan biaya provider
+  // ditanggung kuota gratis platform.
   let reservedMicro = 0;
-  if (!runRow.isTrial) {
+  if (!runRow.isTrial && !runRow.isHolder) {
     const reserved = await reserve({ projectId: runRow.projectId, runId, amountMicro: estimate.reserveMicro });
     if (!reserved.ok) {
       await db
@@ -509,7 +511,8 @@ export async function executeRun(runId: string, opts: ExecuteOptions = {}): Prom
     );
     // Run gagal: tetap tagih step yang sudah benar-benar berbiaya (mis. interpreter
     // atau step teks yang selesai sebelum step berikutnya gagal), lalu lepas sisanya.
-    const chargedMicro = runRow.isTrial ? 0 : chargeMicroFromProviderCost(totalProviderCost, markup);
+    const isFree = runRow.isTrial || runRow.isHolder;
+    const chargedMicro = isFree ? 0 : chargeMicroFromProviderCost(totalProviderCost, markup);
     runFinished = true;
     // Settlement ledger + status run dalam satu transaksi. Bila salah satu
     // gagal, keduanya rollback; tidak ada run RELEASED yang ledger-nya belum
@@ -523,6 +526,24 @@ export async function executeRun(runId: string, opts: ExecuteOptions = {}): Prom
       error: pub.message,
       providerCostUsd: totalProviderCost,
     });
+
+    if (runRow.isHolder && runRow.holderTier && totalProviderCost > 0) {
+      try {
+        const project = await getProjectById(runRow.projectId);
+        if (project) {
+          await recordHolderCost(
+            runId,
+            runRow.projectId,
+            project.ownerWallet,
+            runRow.holderTier,
+            totalProviderCost.toFixed(8),
+          );
+        }
+      } catch (err) {
+        console.warn(`[run ${runId}] failed to record holder cost on failure:`, err);
+      }
+    }
+
     clearInterval(heartbeat);
     emit(runId, { type: "done", status: "RELEASED" });
     return { status: "RELEASED", chargedMicro, output: null };
@@ -540,7 +561,8 @@ export async function executeRun(runId: string, opts: ExecuteOptions = {}): Prom
   );
 
   // ── Settle ─────────────────────────────────────────────────────────────────
-  const chargedMicro = runRow.isTrial ? 0 : chargeMicroFromProviderCost(totalProviderCost, markup);
+  const isFree = runRow.isTrial || runRow.isHolder;
+  const chargedMicro = isFree ? 0 : chargeMicroFromProviderCost(totalProviderCost, markup);
   const outputObj = {
     type: recipe.mode,
     content: lastText?.content ?? null,
@@ -561,6 +583,23 @@ export async function executeRun(runId: string, opts: ExecuteOptions = {}): Prom
     error: null,
     providerCostUsd: totalProviderCost,
   });
+
+  if (runRow.isHolder && runRow.holderTier && totalProviderCost > 0) {
+    try {
+      const project = await getProjectById(runRow.projectId);
+      if (project) {
+        await recordHolderCost(
+          runId,
+          runRow.projectId,
+          project.ownerWallet,
+          runRow.holderTier,
+          totalProviderCost.toFixed(8),
+        );
+      }
+    } catch (err) {
+      console.warn(`[run ${runId}] failed to record holder cost:`, err);
+    }
+  }
 
   clearInterval(heartbeat);
   emit(runId, { type: "done", status: "SETTLED" });

@@ -2,6 +2,7 @@ import type { Address } from "../types";
 import { addresses } from "./addresses";
 
 export * from "./abis";
+export * from "./mainnet";
 
 /**
  * Mengembalikan alamat kontrak pada chain tertentu,

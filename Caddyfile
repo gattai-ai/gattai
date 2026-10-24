@@ -12,6 +12,19 @@
 		}
 	}
 
+	# Halaman share + OG image dirender backend (meta crawler + PNG 1200×630).
+	# Frontend static lain tetap dilayani file_server di bawah.
+	handle /run/* {
+		header {
+			X-Content-Type-Options "nosniff"
+			X-Frame-Options "DENY"
+			Referrer-Policy "strict-origin-when-cross-origin"
+			Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+			Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss:; worker-src 'self' blob:; report-uri /api/v1/public/csp-report"
+		}
+		reverse_proxy backend:3000
+	}
+
 	handle {
 		encode zstd gzip
 

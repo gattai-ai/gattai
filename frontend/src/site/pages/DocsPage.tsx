@@ -653,28 +653,28 @@ export function DocsPage() {
                 <span className="n">12</span>Public burns
               </h2>
               <p>
-                Each epoch, a share of margin from settled runs buys back and burns $GATTAI (or burns
-                treasury $GATTAI directly for runs paid in $GATTAI). Each epoch is published with its
-                transaction hashes.
+                The burn indexer reads every ERC-20 <code className="mono">Transfer</code> of $GATTAI
+                to the dead address. Each event is classified as <code className="mono">team</code>,{" "}
+                <code className="mono">epoch</code>, or <code className="mono">community</code> and
+                published with its transaction hash. Amounts are base-unit integer strings; the UI
+                formats them for display.
               </p>
               <div className="code">
                 <div className="ch">
                   <span>GET /v1/public/burns</span>
                   <button data-copy-code>Copy</button>
                 </div>
-                <pre>
-                  {"{\n"}
-                  {"  "}<span className="c2">&quot;total_burned&quot;</span>: <span className="c3">&quot;…&quot;</span>,
-                  {"\n"}
-                  {"  "}<span className="c2">&quot;epochs&quot;</span>: [{"\n"}
-                  {"    "}{"{{"} <span className="c2">&quot;id&quot;</span>: 12,{" "}
-                  <span className="c2">&quot;period_start&quot;</span>: <span className="c3">&quot;…&quot;</span>,{" "}
-                  <span className="c2">&quot;period_end&quot;</span>: <span className="c3">&quot;…&quot;</span>,{"\n"}
-                  {"      "}<span className="c2">&quot;budget_usd&quot;</span>: <span className="c3">&quot;…&quot;</span>,{" "}
-                  <span className="c2">&quot;tokens_burned&quot;</span>: <span className="c3">&quot;…&quot;</span>,{" "}
-                  <span className="c2">&quot;tx_hashes&quot;</span>: [<span className="c3">&quot;0x…&quot;</span>] {"}}"}
-                  {"\n  "}]{"\n}"}
-                </pre>
+                <pre>{`{
+  "token": { "symbol": "GATTAI", "decimals": 18 },
+  "total_tokens_burned_raw": "28061822210522966378459998",
+  "team_tokens_burned_raw": "28061822210522966378459998",
+  "epoch_tokens_burned_raw": "0",
+  "community_tokens_burned_raw": "0",
+  "burned_percent": "2.80618222",
+  "burns": [
+    { "tx_hash": "0x…", "amount_raw": "…", "kind": "team" }
+  ]
+}`}</pre>
               </div>
               <p>
                 See it rendered on the{" "}

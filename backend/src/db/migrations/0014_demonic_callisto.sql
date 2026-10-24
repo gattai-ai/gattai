@@ -1,0 +1,1 @@
+CREATE INDEX "deposits_status_created_idx" ON "deposits" USING btree ("status","created_at");

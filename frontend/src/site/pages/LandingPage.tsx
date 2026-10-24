@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatUnits } from "viem";
 import { Link } from "@/lib/router";
+import { searchOf, useRouter } from "@/lib/router-context";
 import { api } from "@/lib/api";
 import { useDocumentTitle, useSiteReveal } from "@/site/useSite";
 import { useSession } from "@/lib/use-session";
@@ -197,6 +198,20 @@ const CONSOLE_SCENARIOS: Record<string, ConsoleScenario> = {
 export function LandingPage() {
   useDocumentTitle("GATTAI \u2014 Separate machines. One formation.");
   useSiteReveal();
+  const { location } = useRouter();
+
+  // CTA `/run/:slug` boleh mampir ke landing dengan `?recipe=&prompt=`; teruskan
+  // ke composer app supaya prompt tidak hilang di tengah jalan.
+  const appCtaHref = useMemo(() => {
+    const params = new URLSearchParams(searchOf(location));
+    const recipe = params.get("recipe")?.trim();
+    const prompt = params.get("prompt");
+    if (!recipe && !prompt) return "/app/chat";
+    const next = new URLSearchParams();
+    if (recipe) next.set("f", recipe);
+    if (prompt) next.set("prompt", prompt.slice(0, 4000));
+    return `/app/chat?${next.toString()}`;
+  }, [location]);
 
   const { data: burns } = useQuery({
     queryKey: ["burns"],
@@ -1502,7 +1517,7 @@ export function LandingPage() {
                 Open the app, write what you want, and GATTAI picks the formation. You see one answer, and
                 the chain behind it only if you ask.
               </p>
-              <Link to="/app/chat" className="fakeinput">
+              <Link to={appCtaHref} className="fakeinput">
                 <span id="easyType">{typed}</span>
                 <span className="sendb">
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#140700" strokeWidth="2">

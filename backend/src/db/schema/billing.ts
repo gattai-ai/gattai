@@ -9,7 +9,13 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { burnEpochStatusEnum, depositStatusEnum, ledgerTypeEnum, lotSourceEnum } from "./enums";
+import {
+  burnEpochStatusEnum,
+  burnKindEnum,
+  depositStatusEnum,
+  ledgerTypeEnum,
+  lotSourceEnum,
+} from "./enums";
 import { projects } from "./account";
 
 /**
@@ -92,6 +98,7 @@ export const deposits = pgTable(
   (table) => [
     uniqueIndex("deposits_tx_log_idx").on(table.chainTx, table.logIndex),
     index("deposits_project_idx").on(table.projectId, table.createdAt),
+    index("deposits_status_created_idx").on(table.status, table.createdAt),
   ],
 );
 
@@ -115,4 +122,45 @@ export const burnEpochs = pgTable(
   },
   // Satu epoch per periode → pencatatan idempotent (worker aman diulang).
   (table) => [uniqueIndex("burn_epochs_period_idx").on(table.periodStart)],
+);
+
+/**
+ * Burn token GATTAI yang diindeks langsung dari rantai.
+ *
+ * Sumber kebenaran untuk `/v1/public/burns`: setiap transfer token ke dead
+ * address dicatat sekali per `(chain_tx, log_index)`. Jumlah disimpan sebagai
+ * integer base-unit (numeric 78,0) — bukan float — agar audit tetap exact.
+ *
+ * `kind` diklasifikasikan saat ingest:
+ *  - `epoch` bila tx ada di `burn_epochs.tx_hashes` (menang atas klasifikasi lain),
+ *  - `team` bila pengirim ada di `TEAM_BURN_WALLETS`,
+ *  - `community` untuk transfer sukarela lainnya.
+ */
+export const tokenBurns = pgTable(
+  "token_burns",
+  {
+    id: text("id").primaryKey(),
+    chainTx: text("chain_tx").notNull(),
+    logIndex: integer("log_index").notNull(),
+    tokenAddress: text("token_address").notNull(),
+    fromAddress: text("from_address").notNull(),
+    toAddress: text("to_address").notNull(),
+    /** Jumlah base-unit token (uint256), disimpan exact sebagai numeric(78,0). */
+    amountRaw: numeric("amount_raw", { precision: 78, scale: 0 }).notNull(),
+    decimals: integer("decimals").notNull().default(18),
+    blockNumber: bigint("block_number", { mode: "number" }).notNull(),
+    blockHash: text("block_hash"),
+    /** Waktu blok; null bila RPC gagal saat backfill (bukan alasan menolak burn). */
+    blockTimestamp: timestamp("block_timestamp", { withTimezone: true }),
+    kind: burnKindEnum("kind").notNull(),
+    /** Diisi bila `kind = epoch`; null untuk team/community. */
+    epochId: text("epoch_id").references(() => burnEpochs.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Idempotensi indexer: satu log hanya boleh tercatat sekali.
+    uniqueIndex("token_burns_tx_log_idx").on(table.chainTx, table.logIndex),
+    index("token_burns_block_idx").on(table.blockNumber),
+    index("token_burns_kind_idx").on(table.kind, table.blockTimestamp),
+  ],
 );

@@ -51,3 +51,46 @@ trial:
   # Public beta: 0 (media selalu berbayar). Jangan dinaikkan tanpa guard
   # produksi, anti-abuse, dan persetujuan risiko biaya provider.
   free_media_attempts: 0
+
+holder:
+  # Kill switch global untuk run tier holder.
+  enabled: true
+  # Batas anggaran platform harian (USD) untuk subsidi run holder.
+  daily_budget_usd: 50.0
+  # Interval snapshot saldo onchain (jam).
+  snapshot_interval_hours: 24
+  # Jumlah snapshot berurutan yang harus memenuhi threshold agar tier aktif.
+  consecutive_snapshots_required: 2
+  # Definisi tingkatan tier holder.
+  tiers:
+    - id: pilot
+      name: Pilot
+      min_tokens: "10000"
+      free_runs_per_day: 5
+      free_media_per_day: 0
+      badge: bronze
+      perks:
+        - "5 free text runs every day"
+        - "Access to core AI formations"
+        - "Standard processing priority"
+    - id: commander
+      name: Commander
+      min_tokens: "50000"
+      free_runs_per_day: 15
+      free_media_per_day: 1
+      badge: silver
+      perks:
+        - "15 free text runs every day"
+        - "1 free media generation every day"
+        - "High processing priority"
+    - id: admiral
+      name: Fleet Admiral
+      min_tokens: "250000"
+      free_runs_per_day: 40
+      free_media_per_day: 5
+      badge: gold
+      perks:
+        - "40 free text runs every day"
+        - "5 free media generations every day"
+        - "VIP processing priority"
+        - "Early access to upcoming formations"

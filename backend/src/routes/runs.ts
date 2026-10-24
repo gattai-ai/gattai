@@ -14,18 +14,33 @@ import { runEvents } from "../orchestration/events";
 import { executeRun } from "../orchestration/runner";
 import { suggestRecipe } from "../orchestration/router";
 import { serializeRun } from "../serialize";
+import { serializeShare } from "../serialize-public";
 import { CONVERSATION_ID_PATTERN, dropConversationIfEmpty } from "../services/conversations";
+import {
+  createOrRefreshShare,
+  getActiveShareForRun,
+  revokeRunShare,
+} from "../services/shares";
 import type { ChatMessage } from "../providers";
 import type { AppEnv } from "../types";
 import { estimateToApi } from "./recipes";
 
 const TERMINAL = new Set(["SETTLED", "RELEASED", "INSUFFICIENT_BALANCE"]);
 
+/** Origin untuk tautan share. `PUBLIC_BASE_URL` adalah sumber utama di produksi. */
+function publicBaseUrl(c: { req: { url: string } }): string {
+  return env.publicBaseUrl ?? new URL(c.req.url).origin;
+}
+
 export const runRoutes = new Hono<AppEnv>();
 runRoutes.use("*", requireProject);
 
 // Penjaga belanja provider per project (batas murah hati, anti-abuse).
 const limitRuns = projectRunsLimiter(env.rateLimitWindowMs, env.rateLimitRunsPerMin);
+
+const shareSchema = z.object({
+  show_prompt: z.boolean().optional(),
+});
 
 const createSchema = z.object({
   recipe_id: z.string().max(64).optional(),
@@ -151,6 +166,51 @@ runRoutes.get("/:id", async (c) => {
     .from(runSteps)
     .where(eq(runSteps.runId, run.id));
   return c.json(serializeRun(run, steps));
+});
+
+/** Share aktif satu run untuk pemilik (null bila belum ada/dicabut). */
+runRoutes.get("/:id/share", async (c) => {
+  const project = c.get("project");
+  const run = await getRun(c.req.param("id"));
+  if (!run || run.projectId !== project.id) {
+    throw new ApiError(404, "RUN_NOT_FOUND", "Run not found.");
+  }
+  const share = await getActiveShareForRun(run.id);
+  return c.json({
+    share: share ? serializeShare(share, publicBaseUrl(c)) : null,
+  });
+});
+
+/**
+ * Buat/ambil share publik untuk satu run. Hanya pemilik project yang bisa,
+ * hanya run SETTLED, dan response tidak pernah memuat run/project id.
+ */
+runRoutes.post("/:id/share", async (c) => {
+  const project = c.get("project");
+  const run = await getRun(c.req.param("id"));
+  if (!run || run.projectId !== project.id) {
+    throw new ApiError(404, "RUN_NOT_FOUND", "Run not found.");
+  }
+
+  const raw = await c.req.json().catch(() => ({}));
+  const body = shareSchema.parse(raw);
+  const share = await createOrRefreshShare({
+    run,
+    projectId: project.id,
+    showPrompt: body.show_prompt,
+  });
+  return c.json(serializeShare(share, publicBaseUrl(c)));
+});
+
+/** Cabut share aktif. Idempoten: run tanpa share tetap menghasilkan 204. */
+runRoutes.delete("/:id/share", async (c) => {
+  const project = c.get("project");
+  const run = await getRun(c.req.param("id"));
+  if (!run || run.projectId !== project.id) {
+    throw new ApiError(404, "RUN_NOT_FOUND", "Run not found.");
+  }
+  await revokeRunShare(project.id, run.id);
+  return c.body(null, 204);
 });
 
 runRoutes.get("/:id/events", async (c) => {

@@ -165,6 +165,41 @@ export function assertProductionConfig(): void {
   if (env.burnExecute) {
     throw new Error("BURN_EXECUTE must be false during Phase 1 (buyback/burn is disabled).");
   }
+
+  // Burn indexer membaca transfer token ke dead address. Konfigurasi ini
+  // terpisah dari deposit GATTAI (yang tetap USDG-only di Phase 1).
+  if (env.burnTokenAddress) {
+    assertAddress("BURN_TOKEN_ADDRESS", env.burnTokenAddress);
+    // Baca getter yang memvalidasi format env (desimal & total supply).
+    const burnDecimals = env.burnTokenDecimals;
+    const burnSupply = env.burnTokenTotalSupply;
+    if (burnDecimals > 36 || burnSupply <= 0n) {
+      throw new Error("BURN_TOKEN_DECIMALS/BURN_TOKEN_TOTAL_SUPPLY is invalid.");
+    }
+    for (const address of env.burnDeadAddresses) {
+      assertAddress("BURN_DEAD_ADDRESSES", address);
+    }
+    for (const address of env.teamBurnWallets) {
+      assertAddress("TEAM_BURN_WALLETS", address);
+    }
+    if (env.burnIndexerEnabled) {
+      if (!env.robinhoodRpcUrl) {
+        throw new Error("ROBINHOOD_RPC_URL is required when the burn indexer is enabled.");
+      }
+      const burnFromBlock = env.burnIndexerFromBlock;
+      if (burnFromBlock === undefined || burnFromBlock <= 0n) {
+        throw new Error(
+          "BURN_INDEXER_FROM_BLOCK is required on mainnet and must be > 0: use the token mint block.",
+        );
+      }
+      if (env.burnConfirmations < 60) {
+        throw new Error("BURN_CONFIRMATIONS must be >= 60 on mainnet.");
+      }
+    }
+  } else if (process.env.BURN_INDEXER_ENABLED === "true") {
+    throw new Error("BURN_TOKEN_ADDRESS is required when BURN_INDEXER_ENABLED=true.");
+  }
+
   if (env.allowManualPrices) {
     throw new Error("ALLOW_MANUAL_PRICES must be false during Phase 1 (USDG-only).");
   }
@@ -217,6 +252,38 @@ export const env = {
   },
   get databaseUrl(): string | undefined {
     return process.env.DATABASE_URL;
+  },
+  /**
+   * Origin kanonis untuk tautan share/OG. Wajib absolut bila diisi; jangan
+   * mengandalkan `Host` dari reverse proxy untuk URL yang dilihat crawler.
+   */
+  get publicBaseUrl(): string | undefined {
+    const raw = process.env.PUBLIC_BASE_URL?.trim();
+    if (!raw) return undefined;
+    let url: URL;
+    try {
+      url = new URL(raw);
+    } catch {
+      throw new Error("PUBLIC_BASE_URL must be an absolute URL.");
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      throw new Error("PUBLIC_BASE_URL must use http or https.");
+    }
+    return `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
+  },
+  /**
+   * Folder hasil build frontend yang dibaca backend untuk menyuntikkan meta OG
+   * ke shell SPA. Di VPS folder ini di-mount read-only; di lokal default ke
+   * `frontend/dist`.
+   */
+  get frontendDistDir(): string | undefined {
+    const raw = process.env.FRONTEND_DIST_DIR?.trim();
+    return raw ? raw.replace(/[\\/]+$/, "") : undefined;
+  },
+  /** Gate output media di halaman share. Default mati sampai moderasi tersedia. */
+  get mediaShareEnabled(): boolean {
+    const raw = process.env.MEDIA_SHARE_ENABLED?.trim().toLowerCase();
+    return raw === "1" || raw === "true" || raw === "yes";
   },
   get sessionSecret(): string {
     return assertProdSecret("SESSION_SECRET", process.env.SESSION_SECRET, DEV_SESSION_SECRET);
@@ -444,6 +511,78 @@ export const env = {
   get burnTreasuryPrivateKey(): string | undefined {
     return optionalEnv("BURN_TREASURY_PRIVATE_KEY");
   },
+
+  // ── Burn indexer (Fase 1: index transfer token ke dead address) ────────────
+  /**
+   * Token resmi $GATTAI yang diindeks. Dipisahkan dari `GATTAI_TOKEN_ADDRESS`
+   * (yang tetap kosong selama Phase 1 USDG-only) supaya deposit dan burn bisa
+   * dikonfigurasi independen.
+   */
+  get burnTokenAddress(): string | undefined {
+    return optionalEnv("BURN_TOKEN_ADDRESS");
+  },
+  get burnTokenSymbol(): string {
+    return optionalEnv("BURN_TOKEN_SYMBOL") ?? "GATTAI";
+  },
+  get burnTokenDecimals(): number {
+    return numberEnv("BURN_TOKEN_DECIMALS", 18, { min: 0, max: 36, integer: true });
+  },
+  /** Total supply base-unit; default 1 miliar token (sesuai token launch). */
+  get burnTokenTotalSupply(): bigint {
+    return (
+      optionalBigInt("BURN_TOKEN_TOTAL_SUPPLY") ??
+      1_000_000_000n * 10n ** BigInt(this.burnTokenDecimals)
+    );
+  },
+  /** Hidupkan indexer burn bila token dikonfigurasi (default: aktif). */
+  get burnIndexerEnabled(): boolean {
+    return process.env.BURN_INDEXER_ENABLED !== "false" && Boolean(this.burnTokenAddress);
+  },
+  /** Blok mint/launch; wajib untuk backfill mainnet. */
+  get burnIndexerFromBlock(): bigint | undefined {
+    return optionalBigInt("BURN_INDEXER_FROM_BLOCK");
+  },
+  get burnConfirmations(): number {
+    return numberEnv("BURN_CONFIRMATIONS", 60, { min: 0, max: 1000, integer: true });
+  },
+  get burnIndexerPollIntervalMs(): number {
+    return numberEnv("BURN_INDEXER_POLL_INTERVAL_MS", this.indexerPollIntervalMs, {
+      min: 1000,
+      integer: true,
+    });
+  },
+  get burnIndexerBatchBlocks(): number {
+    return numberEnv("BURN_INDEXER_BATCH_BLOCKS", this.indexerBatchBlocks, {
+      min: 1,
+      integer: true,
+    });
+  },
+  /** Kedalaman pemeriksaan reorg untuk burn yang sudah tercatat. */
+  get burnIndexerReorgLookback(): number {
+    return numberEnv("BURN_INDEXER_REORG_LOOKBACK", 128, { min: 1, integer: true });
+  },
+  /** Wallet tim/treasury yang transfernya diklasifikasikan `team`. */
+  get teamBurnWallets(): string[] {
+    return parseAddressList("TEAM_BURN_WALLETS", process.env.TEAM_BURN_WALLETS, []);
+  },
+  /**
+   * Wallet yang tidak boleh muncul di `/leaderboard` (kontrak internal, akun
+   * operasional, dsb). Tim/treasury sudah otomatis dikecualikan; daftar ini
+   * untuk alamat tambahan yang tidak ingin diumumkan lewat peringkat.
+   */
+  get leaderboardExcludedWallets(): string[] {
+    return parseAddressList(
+      "LEADERBOARD_EXCLUDED_WALLETS",
+      process.env.LEADERBOARD_EXCLUDED_WALLETS,
+      [],
+    );
+  },
+  /** Alamat dead/burn tujuan. Default `0x…dEaD`. */
+  get burnDeadAddresses(): string[] {
+    return parseAddressList("BURN_DEAD_ADDRESSES", process.env.BURN_DEAD_ADDRESSES, [
+      "0x000000000000000000000000000000000000dEaD",
+    ]);
+  },
 };
 
 function optionalEnv(name: string): string | undefined {
@@ -459,6 +598,29 @@ function optionalNumber(name: string): number | undefined {
     throw new Error(`Environment variable ${name} must be a positive number when set.`);
   }
   return value;
+}
+
+/** Bilangan bulat non-negatif (mis. base-unit token) dari env. */
+function optionalBigInt(name: string): bigint | undefined {
+  const raw = optionalEnv(name);
+  if (raw === undefined) return undefined;
+  if (!/^\d+$/.test(raw)) {
+    throw new Error(`Environment variable ${name} must be a non-negative integer when set.`);
+  }
+  return BigInt(raw);
+}
+
+/** Daftar alamat 0x… (dipisah koma); setiap entri divalidasi. */
+function parseAddressList(name: string, raw: string | undefined, fallback: string[]): string[] {
+  const entries = (raw && raw.trim() !== "" ? raw.split(",") : fallback)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  for (const entry of entries) {
+    if (!ADDRESS_RE.test(entry)) {
+      throw new Error(`${name} contains an invalid 0x-prefixed 20-byte address: ${entry}`);
+    }
+  }
+  return [...new Set(entries.map((entry) => entry.toLowerCase()))];
 }
 
 function parseDate(raw: string | undefined, fallback: Date): Date {

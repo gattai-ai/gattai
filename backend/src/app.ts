@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 import { errorBody, ApiError } from "./lib/http";
 import { allowedOrigins, credentialsAllowed } from "./lib/origins";
 import { securityHeaders } from "./middleware/security-headers";
+import { ogRoutes } from "./og/routes";
 import { api } from "./routes";
 
 const app = new Hono();
@@ -22,6 +23,9 @@ app.use(
 );
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Halaman share + OG image. Di produksi Caddy mem-proxy /run/* ke sini.
+app.route("/", ogRoutes);
 
 // Grup route utama (/auth, /v1/*).
 app.route("/", api);

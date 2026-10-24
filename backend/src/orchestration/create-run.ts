@@ -5,6 +5,7 @@ import { recipes, runs } from "../db/schema";
 import { currentBalance, lockProject } from "../billing/ledger";
 import { estimateRecipe, type RecipeEstimate } from "../billing/estimate";
 import { readTrialState } from "../billing/trial";
+import { checkHolderEligibility } from "../holder/service";
 import { newId } from "../lib/id";
 import { ApiError } from "../lib/http";
 import {
@@ -12,6 +13,7 @@ import {
   isRecipeAvailable,
 } from "./availability";
 import { ensureConversation } from "../services/conversations";
+import { getProjectById } from "../services/projects";
 
 export type RunRow = typeof runs.$inferSelect;
 
@@ -37,6 +39,10 @@ export interface CreatedRun {
   estimate: RecipeEstimate;
   /** Run ini dibiayai kuota trial, bukan credit berbayar. */
   isTrial: boolean;
+  /** Run ini dibiayai kuota holder tier, bukan credit berbayar. */
+  isHolder: boolean;
+  /** ID tier holder yang membiayai run ini, bila ada. */
+  holderTier: string | null;
   /**
    * Percakapan pemilik run. Dibuat server bila pemanggil tidak menyebutkannya.
    * `null` berarti run sengaja dibuat tanpa percakapan (`openConversation: false`
@@ -58,77 +64,80 @@ function stableStringify(value: unknown): string {
   if (value !== null && typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>)
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-      .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`);
+      .map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`);
     return `{${entries.join(",")}}`;
   }
-  return JSON.stringify(value) ?? "null";
+  return JSON.stringify(value);
 }
 
-/** Simpan/segarkan definisi recipe ke tabel `recipes` (versioning sederhana). */
-async function ensureRecipeRow(recipe: RecipeConfig): Promise<number> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+/**
+ * Sinkronkan definisi recipe dari YAML ke tabel `recipes` (idempotent).
+ *
+ * Bila config berbeda dari versi aktif di DB, insert versi baru (version + 1)
+ * dan nonaktifkan versi lama. Run lama tetap menunjuk versi lama yang
+ * memproduksinya, sehingga riwayat tetap bisa direproduksi.
+ */
+export async function syncRecipes(): Promise<void> {
+  const fileRecipes = getConfig().recipes;
+  for (const recipe of fileRecipes) {
     const existing = await db
       .select()
       .from(recipes)
-      .where(eq(recipes.id, recipe.id))
-      .orderBy(recipes.version);
-    const latest = existing[existing.length - 1];
+      .where(and(eq(recipes.id, recipe.id), eq(recipes.active, true)))
+      .limit(1);
 
-    // Reuse jika config aktif identik (hindari bump versi tiap run).
-    // Perbandingan memakai stringify kanonis karena round-trip jsonb
-    // mengurutkan ulang kunci objek.
-    if (latest && latest.active && stableStringify(latest.configJson) === stableStringify(recipe)) {
-      return latest.version;
-    }
+    const current = existing[0];
+    const canonicalNew = stableStringify(recipe);
+    const canonicalOld = current ? stableStringify(current.configJson) : null;
 
-    const version = latest ? latest.version + 1 : 1;
-    try {
-      await db
-        .update(recipes)
-        .set({ active: false })
-        .where(eq(recipes.id, recipe.id));
-
+    if (!current) {
       await db.insert(recipes).values({
         id: recipe.id,
-        version,
+        version: 1,
         configJson: recipe,
         active: true,
       });
-      return version;
-    } catch {
-      // Balapan dengan worker lain (index unik id+version): baca ulang
-      // dan coba lagi dengan versi berikutnya.
+      continue;
+    }
+
+    if (canonicalNew !== canonicalOld) {
+      const nextVersion = current.version + 1;
+      await db.transaction(async (tx) => {
+        await tx
+          .update(recipes)
+          .set({ active: false })
+          .where(and(eq(recipes.id, recipe.id), eq(recipes.version, current.version)));
+        await tx.insert(recipes).values({
+          id: recipe.id,
+          version: nextVersion,
+          configJson: recipe,
+          active: true,
+        });
+      });
     }
   }
-  throw new ApiError(500, "RECIPE_SYNC_FAILED", "Failed to sync recipes. Try again.");
+}
+
+/** Ambil versi aktif sebuah recipe dari DB. */
+export async function getActiveRecipeVersion(recipeId: string): Promise<number> {
+  const row = await db
+    .select({ version: recipes.version })
+    .from(recipes)
+    .where(and(eq(recipes.id, recipeId), eq(recipes.active, true)))
+    .limit(1);
+  return row[0]?.version ?? 1;
 }
 
 /**
- * Sinkronkan seluruh recipe dari config ke tabel `recipes` (seed idempoten).
- * Dipanggil saat startup & oleh skrip seed. Aman dijalankan berkali-kali.
- */
-export async function syncRecipes(): Promise<number> {
-  const config = getConfig();
-  for (const recipe of config.recipes) {
-    await ensureRecipeRow(recipe);
-  }
-  return config.recipes.length;
-}
-
-/**
- * Membuat run baru. Idempotent bila `idempotencyKey` sama:
- * - key dipakai ulang dengan body identik → kembalikan run yang ada;
- * - key dipakai ulang dengan body berbeda → 409 IDempotency conflict;
- * - balapan insert konkuren → yang kalah membaca ulang baris pemenang
- *   (bukan error 500), karena `idempotency_key` UNIQUE di database.
- * Recipe media (requires_confirmation) berhenti di AWAITING_CONFIRMATION.
+ * Buat run baru di DB (status CREATED atau AWAITING_CONFIRMATION).
  *
- * Kuota trial (params.trial) dipakai LEBIH DULU untuk semua wallet, apa pun
- * saldonya. Teks dan media memakai anggaran terpisah (`free_runs` untuk run
- * `streaming`, `free_media_attempts` untuk formasi media) karena biaya provider
- * media jauh di atas teks. Bila anggaran habis dan saldo tidak cukup, run
- * ditolak 402. Klaim kuota + insert run berada di satu transaksi, sehingga insert
- * yang gagal tidak menghanguskan percobaan.
+ * Idempotency dijamin oleh index `(project_id, idempotency_key)`: bila key sudah
+ * pernah dipakai di project ini dengan body yang sama, baris lama dikembalikan
+ * apa adanya (`replayed: true`), tanpa menagih atau mengeksekusi ulang.
+ *
+ * Bila saldo kurang dari `min(deposit_minimum, estimasi_maksimal)`, run
+ * DITOLAK di sini (402 PAYMENT_REQUIRED) sebelum menyentuh runner — tidak ada
+ * run CREATED yang sengaja dibuat untuk langsung gagal.
  */
 export async function createRun(input: CreateRunInput): Promise<CreatedRun> {
   const recipe = getRecipe(input.recipeId);
@@ -136,36 +145,23 @@ export async function createRun(input: CreateRunInput): Promise<CreatedRun> {
     throw new ApiError(404, "RECIPE_NOT_FOUND", `Recipe not found: ${input.recipeId}`);
   }
 
-  // Replay idempotent dicek SEBELUM klaim kuota: retry dengan
-  // `Idempotency-Key` yang sama tidak boleh menambah percobaan trial.
-  if (input.idempotencyKey) {
-    const replay = await replayRun(input.projectId, input.idempotencyKey, recipe, input.input);
-    if (replay) return replay;
-  }
-
-  // Guard ketersediaan: formasi yang provider-nya belum dikonfigurasi ditolak
-  // di depan (tanpa charge, tanpa baris run) alih-alih dibiarkan gagal di tengah
-  // jalan. Ditaruh setelah replay idempotent supaya retry run lama tetap
-  // mengembalikan run itu, dan sebelum transaksi supaya tidak ada efek samping.
+  // Guard: tolak pembuatan run untuk formasi yang provider-nya belum siap.
+  // Pesan dibedakan antara formasi teks vs media supaya transparan ke user.
   if (!isRecipeAvailable(recipe)) {
     throw new ApiError(503, "FORMATION_UNAVAILABLE", FORMATION_UNAVAILABLE_MESSAGE);
   }
 
   const estimate = estimateRecipe(recipe);
-  const params = getParams();
-
-  // Sinkronisasi recipe memakai koneksi global (bukan `tx`), jadi dijalankan di
-  // luar transaksi klaim.
-  const version = await ensureRecipeRow(recipe);
+  const version = await getActiveRecipeVersion(recipe.id);
   const status = recipe.pricing.requires_confirmation ? "AWAITING_CONFIRMATION" : "CREATED";
 
   try {
     return await db.transaction(async (tx) => {
-      // Kunci baris project: menutup balapan antar-request bersamaan saat
-      // menghitung kuota (pola sama seperti reservasi di billing/ledger.ts).
+      // Kunci project selama pemeriksaan saldo + pembuatan run; dengan begitu
+      // dua request bersamaan tidak bisa saling mendahului membaca saldo lama.
       await lockProject(tx, input.projectId);
       const balance = await currentBalance(tx, input.projectId);
-
+      const params = getParams();
       const trial = await readTrialState(
         tx,
         input.projectId,
@@ -188,9 +184,28 @@ export async function createRun(input: CreateRunInput): Promise<CreatedRun> {
         trial.attempts < trial.maxAttempts && (isMedia ? mediaSlotLeft : textSlotLeft);
 
       let isTrial = false;
+      let isHolder = false;
+      let holderTier: string | null = null;
+
       if (trialAvailable) {
         isTrial = true;
-      } else if (balance < estimate.reserveMicro) {
+      } else {
+        // Cek kelayakan tier holder jika trial sudah habis
+        const project = await getProjectById(input.projectId);
+        if (project) {
+          const holderCheck = await checkHolderEligibility(
+            project.ownerWallet,
+            input.projectId,
+            isMedia,
+          );
+          if (holderCheck.eligible && holderCheck.tierId) {
+            isHolder = true;
+            holderTier = holderCheck.tierId;
+          }
+        }
+      }
+
+      if (!isTrial && !isHolder && balance < estimate.reserveMicro) {
         // Tolak sinkron bila saldo di bawah reservasi estimasi (brief §9.2):
         // 402 + link top-up, sebelum run dibuat. Pemeriksaan async di runner
         // tetap menjadi otoritas akhir bila saldo berubah di tengah jalan.
@@ -235,11 +250,22 @@ export async function createRun(input: CreateRunInput): Promise<CreatedRun> {
           conversationId,
           input: input.input,
           isTrial,
+          isHolder,
+          holderTier,
           idempotencyKey: input.idempotencyKey ?? newId("idem"),
         })
         .returning();
 
-      return { run: inserted[0], recipe, estimate, isTrial, conversationId, replayed: false };
+      return {
+        run: inserted[0],
+        recipe,
+        estimate,
+        isTrial,
+        isHolder,
+        holderTier,
+        conversationId,
+        replayed: false,
+      };
     });
   } catch (error) {
     // Penolakan kuota (402) harus diteruskan apa adanya.
@@ -280,6 +306,8 @@ async function replayRun(
     recipe,
     estimate: estimateRecipe(recipe),
     isTrial: row.isTrial,
+    isHolder: row.isHolder,
+    holderTier: row.holderTier,
     conversationId: row.conversationId,
     replayed: true,
   };

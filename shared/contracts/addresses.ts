@@ -1,5 +1,8 @@
 // File ini dibuat otomatis oleh scripts/sync-contracts.mjs - jangan diedit manual.
 export const addresses = {
+  "4663": {
+    "DepositManager": "0xbf1F9ea84820B619EdC58eD15304Eb22547fBC07"
+  },
   "31337": {
     "Counter": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
   },

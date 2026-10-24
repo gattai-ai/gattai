@@ -5,7 +5,20 @@ import { isRecipeAvailable } from "../orchestration/availability";
 import { buildTokenRegistry } from "../onchain/registry";
 import { buildPriceContext } from "../onchain/config";
 import { priceForToken } from "../onchain/prices";
-import { burnedTotalTokens, listEpochs } from "../burn/epochs";
+import { listEpochs } from "../burn/epochs";
+import {
+  burnedPercent,
+  formatTokenAmount,
+  getTokenBurnStats,
+  listTokenBurns,
+} from "../burn/token-burns";
+import { getPublicHolderTiers } from "../holder/service";
+import { getLeaderboardRanking, LEADERBOARD_LIMIT } from "../leaderboard/service";
+import { leaderboardWeekSchema, serializeWeek, weekWindow } from "../leaderboard/week";
+import { serializePublicRun } from "../serialize-public";
+import { getPublicSharedRun } from "../services/shares";
+import { getStats } from "../stats/service";
+import { ApiError } from "../lib/http";
 
 /**
  * Endpoint publik tanpa auth: konfigurasi top-up onchain yang dibutuhkan
@@ -58,13 +71,123 @@ publicRoutes.get("/deposits/config", async (c) => {
 });
 
 /**
- * Statistik buyback & burn (Fase 3). Publik, tanpa auth.
- * Menampilkan total GATTAI terbakar (epoch `executed`) + rincian per epoch.
+ * Satu run yang di-share. Tanpa auth; slug acak adalah kapabilitasnya.
+ *
+ * Serializer publik sengaja tidak memakai `serializeRun()`: tidak ada run id,
+ * project id, step id, wallet, biaya provider, atau data internal lain.
+ */
+publicRoutes.get("/runs/:slug", async (c) => {
+  const shared = await getPublicSharedRun(c.req.param("slug"));
+  if (!shared) {
+    throw new ApiError(404, "RUN_NOT_FOUND", "Run not found.");
+  }
+
+  c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=30");
+  return c.json(serializePublicRun(shared, { mediaShareEnabled: env.mediaShareEnabled }));
+});
+
+/**
+ * Peringkat mingguan publik. Hanya run SETTLED, cap 200/project/hari, top 20.
+ * `me` sengaja selalu null: response ini di-cache per URL dan tidak boleh
+ * berbeda antar sesi. Rank user login diambil dari `/v1/leaderboard/me`.
+ */
+publicRoutes.get("/leaderboard", async (c) => {
+  const week = leaderboardWeekSchema.parse(c.req.query("week") ?? "current");
+  const ranking = await getLeaderboardRanking(weekWindow(week));
+
+  c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=30");
+
+  return c.json({
+    week: serializeWeek(ranking.window),
+    entries: ranking.ranked.slice(0, LEADERBOARD_LIMIT).map((entry, index) => ({
+      rank: index + 1,
+      display_name: entry.displayName,
+      runs: entry.runs,
+      is_me: false,
+    })),
+    me: null,
+    updated_at: ranking.updatedAt.toISOString(),
+  });
+});
+
+/**
+ * Agregasi statistik publik produk, revenue, token burn, dan kontrak onchain.
+ * Cache publik 60 detik.
+ */
+publicRoutes.get("/stats", async (c) => {
+  const stats = await getStats();
+  c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=30");
+  return c.json(stats);
+});
+
+/**
+ * Definisi publik tingkatan tier holder, aturan snapshot, dan kuota harian.
+ * Cache publik 300 detik.
+ */
+publicRoutes.get("/holder/tiers", (c) => {
+  const data = getPublicHolderTiers();
+  c.header("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
+  return c.json(data);
+});
+
+/**
+ * Statistik burn token GATTAI. Publik, tanpa auth.
+ *
+ * Sumber angka adalah `token_burns` (hasil indexer transfer ke dead address),
+ * bukan hanya epoch `executed`. Dengan begitu burn tim/treasury dan burn
+ * komunitas tetap terlihat, dan total = team + epoch + community.
+ *
+ * Semua jumlah base-unit dikirim sebagai string integer. Field desimal
+ * (`*_tokens_burned`) disediakan untuk kompatibilitas & tampilan; frontend
+ * tetap memakai `*_raw` + `token.decimals` agar tidak kehilangan presisi.
  */
 publicRoutes.get("/burns", async (c) => {
-  const [total, epochs] = await Promise.all([burnedTotalTokens(), listEpochs(50)]);
+  const [stats, burns, epochs] = await Promise.all([
+    getTokenBurnStats(),
+    listTokenBurns(200),
+    listEpochs(50),
+  ]);
+
+  const decimals = env.burnTokenDecimals;
+  const supplyRaw = env.burnTokenTotalSupply;
+  const tokenAddress = env.burnTokenAddress ?? null;
+
+  // Data publik boleh di-cache singkat; indexer berjalan tiap beberapa detik.
+  c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=30");
+
   return c.json({
-    total_tokens_burned: total,
+    token: {
+      address: tokenAddress,
+      symbol: env.burnTokenSymbol,
+      decimals,
+      total_supply_raw: supplyRaw.toString(),
+      total_supply: formatTokenAmount(supplyRaw, decimals),
+    },
+    total_tokens_burned: formatTokenAmount(stats.totalRaw, decimals),
+    total_tokens_burned_raw: stats.totalRaw.toString(),
+    team_tokens_burned: formatTokenAmount(stats.teamRaw, decimals),
+    team_tokens_burned_raw: stats.teamRaw.toString(),
+    epoch_tokens_burned: formatTokenAmount(stats.epochRaw, decimals),
+    epoch_tokens_burned_raw: stats.epochRaw.toString(),
+    community_tokens_burned: formatTokenAmount(stats.communityRaw, decimals),
+    community_tokens_burned_raw: stats.communityRaw.toString(),
+    burned_percent: burnedPercent(stats.totalRaw, supplyRaw),
+    burn_counts: stats.counts,
+    burns: burns.map((burn) => ({
+      id: burn.id,
+      tx_hash: burn.chainTx,
+      log_index: burn.logIndex,
+      block_number: burn.blockNumber,
+      block_timestamp: burn.blockTimestamp?.toISOString() ?? null,
+      from: burn.fromAddress,
+      to: burn.toAddress,
+      amount_raw: burn.amountRaw,
+      amount: formatTokenAmount(BigInt(burn.amountRaw), burn.decimals),
+      decimals: burn.decimals,
+      kind: burn.kind,
+      epoch_id: burn.epochId,
+      created_at: burn.createdAt,
+    })),
     epochs: epochs.map((epoch) => ({
       id: epoch.id,
       period_start: epoch.periodStart,

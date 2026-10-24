@@ -1,0 +1,418 @@
+/* GATTAI Holders Page Styles */
+
+.holders-page {
+  min-height: calc(100vh - 80px);
+  padding: 100px 16px 80px;
+  max-width: 1120px;
+  margin: 0 auto;
+  color: #ededed;
+  box-sizing: border-box;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+
+.holders-hero {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.holders-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #ff5b1f;
+  background: rgba(255, 91, 31, 0.1);
+  border: 1px solid rgba(255, 91, 31, 0.25);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  margin-bottom: 16px;
+}
+
+.holders-title {
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+  color: #ffffff;
+}
+
+.holders-subtitle {
+  font-size: clamp(14px, 2.5vw, 17px);
+  color: #9ba1b0;
+  max-width: 620px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+
+/* ── Banners ──────────────────────────────────────────────────────────────── */
+
+.holders-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.holders-banner.pause {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.holders-banner.warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fcd34d;
+}
+
+.holders-banner.pending {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+}
+
+/* ── Cards Grid ───────────────────────────────────────────────────────────── */
+
+.holders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.holders-card {
+  background: #0f1118;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.holders-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.holders-card-label {
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71788e;
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tier-badge.bronze {
+  background: rgba(205, 127, 50, 0.2);
+  color: #e59866;
+  border: 1px solid rgba(205, 127, 50, 0.4);
+}
+
+.tier-badge.silver {
+  background: rgba(192, 192, 192, 0.2);
+  color: #e0e0e0;
+  border: 1px solid rgba(192, 192, 192, 0.4);
+}
+
+.tier-badge.gold {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+}
+
+.tier-badge.none {
+  background: rgba(255, 255, 255, 0.08);
+  color: #8c93a8;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.holders-tier-name {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px;
+}
+
+.holders-quota-stat {
+  font-size: 32px;
+  font-weight: 800;
+  color: #ff5b1f;
+  margin: 8px 0;
+  line-height: 1;
+}
+
+.holders-quota-stat small {
+  font-size: 16px;
+  font-weight: 500;
+  color: #9ba1b0;
+}
+
+.holders-countdown-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+  color: #71788e;
+  margin-top: 12px;
+}
+
+.holders-countdown-wrap strong {
+  color: #ffffff;
+}
+
+/* ── Snapshot Card ────────────────────────────────────────────────────────── */
+
+.holders-snapshot-bal {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 8px 0;
+}
+
+.holders-snapshot-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #8c93a8;
+  margin-top: 10px;
+}
+
+.holders-snapshot-meta a {
+  color: #ff5b1f;
+  text-decoration: none;
+}
+
+.holders-snapshot-meta a:hover {
+  text-decoration: underline;
+}
+
+.holders-rule-note {
+  font-size: 11px;
+  color: #646b80;
+  margin-top: 14px;
+  line-height: 1.4;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 10px;
+}
+
+/* ── Progress Card ────────────────────────────────────────────────────────── */
+
+.holders-progress-bar-wrap {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+  margin: 16px 0 10px;
+}
+
+.holders-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ff5b1f, #ff8c42);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.holders-progress-copy {
+  font-size: 13px;
+  color: #c4c9d6;
+  margin: 0;
+}
+
+/* ── Tier Comparison Table ────────────────────────────────────────────────── */
+
+.holders-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 40px 0 16px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.holders-table-wrap {
+  overflow-x: auto;
+  background: #0f1118;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.holders-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.holders-table th {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 14px 18px;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71788e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.holders-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #c4c9d6;
+}
+
+.holders-table tr.active-tier-row {
+  background: rgba(255, 91, 31, 0.08);
+  border-left: 3px solid #ff5b1f;
+}
+
+.holders-table tr.active-tier-row td {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.holders-perk-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: #8c93a8;
+  line-height: 1.5;
+}
+
+/* ── Activity Section ─────────────────────────────────────────────────────── */
+
+.holders-activity-empty {
+  padding: 36px 16px;
+  text-align: center;
+  color: #71788e;
+  font-size: 14px;
+}
+
+/* ── Protocol Info Section ────────────────────────────────────────────────── */
+
+.holders-protocol-box {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.holders-protocol-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.protocol-step {
+  display: flex;
+  gap: 14px;
+}
+
+.protocol-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 91, 31, 0.15);
+  color: #ff5b1f;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.protocol-step h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.protocol-step p {
+  margin: 0;
+  font-size: 13px;
+  color: #8c93a8;
+  line-height: 1.5;
+}
+
+/* ── CTAs ─────────────────────────────────────────────────────────────────── */
+
+.holders-cta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.holders-cta-bar a,
+.holders-cta-bar button {
+  min-width: 180px;
+  text-align: center;
+}
+
+/* ── Responsive Mobile (360px) ────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .holders-page {
+    padding-top: 80px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .holders-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .holders-card {
+    padding: 18px;
+  }
+
+  .holders-table th,
+  .holders-table td {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .holders-cta-bar {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .holders-cta-bar a,
+  .holders-cta-bar button {
+    width: 100%;
+  }
+}

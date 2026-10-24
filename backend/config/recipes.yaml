@@ -24,12 +24,14 @@ recipes:
         role: interpret
         label: GPT
         role_label: interpret
+        public_role: Planner
       - id: execute
         provider: mimo
         model_ref: mimo_primary
         role: execute
         label: Claude
         role_label: execute
+        public_role: Executor
         input_from: interpret
         stream: true
     pricing:
@@ -49,12 +51,14 @@ recipes:
         role: gather_sources
         label: Perplexity
         role_label: gather_sources
+        public_role: Researcher
       - id: write
         provider: mimo
         model_ref: mimo_primary
         role: write_report
         label: Claude
         role_label: write
+        public_role: Writer
         input_from: gather_sources
         stream: true
     pricing:
@@ -74,12 +78,14 @@ recipes:
         role: write_code
         label: Claude
         role_label: write
+        public_role: Writer
       - id: review
         provider: mimo
         model_ref: mimo_architect
         role: review
         label: GPT
         role_label: review
+        public_role: Reviewer
         input_from: write
       - id: fix
         provider: mimo
@@ -87,6 +93,7 @@ recipes:
         role: fix
         label: Claude
         role_label: fix
+        public_role: Executor
         input_from: review
         stream: true
     pricing:
@@ -106,6 +113,7 @@ recipes:
         role: art_direction
         label: Claude
         role_label: art_direction
+        public_role: Art Director
         output_schema: media_spec_v1
       - id: render
         provider: higgsfield
@@ -113,6 +121,7 @@ recipes:
         role: render_image
         label: Higgsfield
         role_label: render · image
+        public_role: Renderer
         input_from: art_direction
         async: true
     pricing:
@@ -133,6 +142,7 @@ recipes:
         role: script_and_shots
         label: Claude
         role_label: script_and_shots
+        public_role: Scriptwriter
         output_schema: video_spec_v1
       - id: render
         provider: higgsfield
@@ -140,6 +150,7 @@ recipes:
         role: render_video
         label: Higgsfield
         role_label: render · video
+        public_role: Renderer
         input_from: script
         async: true
     pricing:
@@ -160,6 +171,7 @@ recipes:
         role: copy_pack
         label: Claude
         role_label: copy_pack
+        public_role: Copywriter
         output_schema: launch_kit_v1
       - id: render_banner
         provider: higgsfield
@@ -167,6 +179,7 @@ recipes:
         role: render_image
         label: Higgsfield
         role_label: render · banner
+        public_role: Renderer
         input_from: copy_pack
         async: true
     pricing:

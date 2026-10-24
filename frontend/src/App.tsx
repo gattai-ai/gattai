@@ -13,6 +13,10 @@ import { KeysView } from "@/site/app/KeysView";
 import { UsageView } from "@/site/app/UsageView";
 import { LandingPage } from "@/site/pages/LandingPage";
 import { BurnsPage } from "@/site/pages/BurnsPage";
+import { HoldersPage } from "@/site/pages/HoldersPage";
+import { LeaderboardPage } from "@/site/pages/LeaderboardPage";
+import { StatsPage } from "@/site/pages/StatsPage";
+import { RunPage } from "@/site/pages/RunPage";
 import { DocsPage } from "@/site/pages/DocsPage";
 import { LegalPage } from "@/site/pages/LegalPage";
 
@@ -57,6 +61,35 @@ function Routes() {
     return (
       <MarketingLayout>
         <BurnsPage />
+      </MarketingLayout>
+    );
+  }
+  if (matchPath(location, "/holders")) {
+    return (
+      <MarketingLayout>
+        <HoldersPage />
+      </MarketingLayout>
+    );
+  }
+  if (matchPath(location, "/stats")) {
+    return (
+      <MarketingLayout>
+        <StatsPage />
+      </MarketingLayout>
+    );
+  }
+  if (matchPath(location, "/leaderboard")) {
+    return (
+      <MarketingLayout>
+        <LeaderboardPage />
+      </MarketingLayout>
+    );
+  }
+  if (matchPath(location, "/run")) {
+    const slug = pathname.split("/").filter(Boolean)[1] ?? "";
+    return (
+      <MarketingLayout>
+        <RunPage slug={slug} />
       </MarketingLayout>
     );
   }

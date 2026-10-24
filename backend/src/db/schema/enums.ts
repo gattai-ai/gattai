@@ -40,3 +40,12 @@ export const depositStatusEnum = pgEnum("deposit_status", [
 ]);
 
 export const burnEpochStatusEnum = pgEnum("burn_epoch_status", ["pending", "executed", "failed"]);
+
+/**
+ * Sumber sebuah burn token GATTAI.
+ *
+ * - `team`      : transfer dari wallet tim/treasury ke dead address.
+ * - `epoch`     : tx yang tercatat pada epoch buyback & burn.
+ * - `community` : transfer sukarela dari wallet lain ke dead address.
+ */
+export const burnKindEnum = pgEnum("burn_kind", ["team", "epoch", "community"]);

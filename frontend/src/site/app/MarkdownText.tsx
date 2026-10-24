@@ -25,9 +25,16 @@ const Anchor: Components["a"] = ({ node, ...rest }) => {
 
 const COMPONENTS: Components = { a: Anchor };
 
-export function MarkdownText({ text }: { text: string }) {
+export function MarkdownText({
+  text,
+  className = "out md",
+}: {
+  text: string;
+  /** Halaman publik memakai kelas sendiri; app tetap default `out md`. */
+  className?: string;
+}) {
   return (
-    <div className="out md" data-out>
+    <div className={className} data-out>
       <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={COMPONENTS}>
         {text}
       </ReactMarkdown>

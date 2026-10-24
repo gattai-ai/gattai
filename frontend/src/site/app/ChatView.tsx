@@ -13,6 +13,7 @@ import { addGalleryEntry } from "./galleryStore";
 import { extractMedia, type RunMedia } from "./media";
 import { MediaOutput } from "./MediaOutput";
 import { MarkdownText } from "./MarkdownText";
+import { ShareDialog } from "./ShareDialog";
 import { readCapSettings, useSpentToday } from "./cap";
 import { NeedLogin } from "./AppShell";
 import { useSession } from "@/lib/use-session";
@@ -116,6 +117,16 @@ function readInitialFormation(search: string): string {
 }
 
 /**
+ * Prefill composer dari tautan `/app/chat?f=research&prompt=…` (CTA halaman
+ * `/run/:slug`). Prompt tidak pernah dieksekusi otomatis: user tetap melihat
+ * formasi, biaya, dan menekan Send sendiri.
+ */
+function readInitialPrompt(search: string): string {
+  const value = new URLSearchParams(search).get("prompt");
+  return value ? value.slice(0, 4000) : "";
+}
+
+/**
  * Bentuk id percakapan yang sah — cermin `CONVERSATION_ID_PATTERN` di backend.
  * Id di URL yang tidak cocok diabaikan (dianggap chat baru) supaya tautan
  * ngawur tidak memicu permintaan 404 berulang.
@@ -187,8 +198,10 @@ export function ChatView() {
   const { data: recipesData } = useRecipes(Boolean(session));
 
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(() => readInitialPrompt(window.location.search));
   const [formation, setFormation] = useState("auto");
+  /** Run yang dialog share-nya sedang terbuka; null = dialog tertutup. */
+  const [shareRunId, setShareRunId] = useState<string | null>(null);
   const [hood, setHood] = useState(false);
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -982,6 +995,9 @@ export function ChatView() {
                   )}
                 </span>
                 <span className="acts">
+                  {turn.runId && turn.status === "SETTLED" ? (
+                    <button onClick={() => setShareRunId(turn.runId)}>Share</button>
+                  ) : null}
                   <button data-copyout onClick={() => void copyText(turn.text || turn.prompt)}>
                     Copy
                   </button>
@@ -1074,6 +1090,14 @@ export function ChatView() {
           </div>
         </div>
       </div>
+
+      {shareRunId ? (
+        <ShareDialog
+          runId={shareRunId}
+          title={turns.find((turn) => turn.runId === shareRunId)?.recipeName ?? null}
+          onClose={() => setShareRunId(null)}
+        />
+      ) : null}
     </section>
   );
 }

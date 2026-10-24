@@ -10,7 +10,7 @@ type CreditLot = typeof creditLots.$inferSelect;
 type ApiKey = typeof apiKeys.$inferSelect;
 
 /**
- * Nama provider internal → merek publik. Dipakai sebagai jaring pengaman bila
+ * Nama provider internal ➜ merek publik. Dipakai sebagai jaring pengaman bila
  * langkah tidak lagi ada di config (mis. run lama), supaya nama provider asli
  * tidak pernah muncul di response API.
  */
@@ -62,6 +62,8 @@ export function serializeRun(run: Run, steps?: RunStep[]) {
     status: run.status,
     mode: run.mode,
     is_trial: run.isTrial,
+    is_holder: run.isHolder,
+    holder_tier: run.holderTier,
     // Prompt user. Diperlukan untuk membangun ulang transkrip percakapan
     // (`GET /v1/conversations/:id`) tanpa menyimpan salinan di klien.
     input: run.input,

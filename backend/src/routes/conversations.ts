@@ -1,8 +1,8 @@
-import { and, desc, eq, exists, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, exists, inArray, isNull, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "../db";
-import { conversations, runSteps, runs } from "../db/schema";
+import { conversations, runShares, runSteps, runs } from "../db/schema";
 import { env } from "../env";
 import { ApiError } from "../lib/http";
 import { parseLimit, readCursor } from "../lib/pagination";
@@ -11,6 +11,7 @@ import { createRateLimiter } from "../middleware/rate-limit";
 import { requireProject } from "../middleware/auth";
 import { serializeRun } from "../serialize";
 import { CONVERSATION_ID_PATTERN } from "../services/conversations";
+import { revokeSharesForConversation } from "../services/shares";
 import type { AppEnv } from "../types";
 
 /**
@@ -151,14 +152,52 @@ conversationRoutes.get("/", limitConversationReads, async (c) => {
   const page = hasMore ? rows.slice(0, limit) : rows;
   const last = page[page.length - 1];
 
+  // Run SETTLED terbaru per percakapan + share aktifnya. History memakai ini
+  // untuk tombol "Share latest" tanpa harus membuka transkrip lebih dulu.
+  const pageIds = page.map((row) => row.id);
+  const latestRuns = pageIds.length
+    ? await db
+        .selectDistinctOn([runs.conversationId], {
+          conversationId: runs.conversationId,
+          runId: runs.id,
+          createdAt: runs.createdAt,
+        })
+        .from(runs)
+        .where(and(inArray(runs.conversationId, pageIds), eq(runs.status, "SETTLED")))
+        .orderBy(runs.conversationId, desc(runs.createdAt), desc(runs.id))
+    : [];
+  const latestByConversation = new Map(
+    latestRuns.map((run) => [run.conversationId, run] as const),
+  );
+  const latestRunIds = latestRuns.map((run) => run.runId);
+  const shares = latestRunIds.length
+    ? await db
+        .select()
+        .from(runShares)
+        .where(and(inArray(runShares.runId, latestRunIds), isNull(runShares.revokedAt)))
+    : [];
+  const shareByRun = new Map(shares.map((share) => [share.runId, share] as const));
+
   return c.json({
-    conversations: page.map((row) => ({
-      id: row.id,
-      title: row.title,
-      created_at: row.createdAt,
-      last_run_at: row.lastRunAt,
-      run_count: Number(row.runCount),
-    })),
+    conversations: page.map((row) => {
+      const latest = latestByConversation.get(row.id);
+      const share = latest ? shareByRun.get(latest.runId) : undefined;
+      return {
+        id: row.id,
+        title: row.title,
+        created_at: row.createdAt,
+        last_run_at: row.lastRunAt,
+        run_count: Number(row.runCount),
+        latest_settled_run_id: latest?.runId ?? null,
+        share: share
+          ? {
+              slug: share.slug,
+              show_prompt: share.showPrompt,
+              created_at: share.createdAt,
+            }
+          : null,
+      };
+    }),
     has_more: hasMore,
     next_cursor: hasMore && last ? `${new Date(last.lastRunAt).toISOString()}|${last.id}` : null,
   });
@@ -274,6 +313,9 @@ conversationRoutes.delete("/:id", limitConversationWrites, async (c) => {
         "This chat has a run in progress. Wait for it to finish, then delete it.",
       );
     }
+
+    // Run dipertahankan untuk billing, jadi share-nya harus dicabut eksplisit.
+    await revokeSharesForConversation(tx, project.id, id);
 
     const released = await tx
       .update(runs)

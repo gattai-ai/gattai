@@ -145,7 +145,8 @@ backend/
     ├── orchestration/       # runner (state machine), interpreter, router, summarize, prompts, SSE
     ├── onchain/             # deposit indexer: client viem, event, valuasi harga, credits, ingest
     ├── burn/                # epoch buyback & burn: plan, epochs, executor, worker (Fase 3)
-    ├── routes/              # auth, runs, chat completions, balance, usage, keys, project, public, dev
+    ├── leaderboard/         # window mingguan UTC, agregasi cap 200/hari, exclusion, opt-out
+    ├── routes/              # auth, runs, chat completions, balance, usage, keys, leaderboard, project, public, dev
     └── services/            # project (termasuk onchain_id)
 ```
 
@@ -184,7 +185,11 @@ GET    /v1/balance
 GET    /v1/usage
 GET    /v1/project           (sesi/key; menyertakan onchain_id)
 GET    /v1/public/deposits/config   (tanpa auth; konfigurasi top-up)
+GET    /v1/public/stats             (tanpa auth; agregasi flywheel produk, revenue & burns)
 GET    /v1/public/burns             (tanpa auth; statistik buyback & burn)
+GET    /v1/public/leaderboard       (tanpa auth; peringkat mingguan top 20)
+GET    /v1/leaderboard/me           (sesi/key; rank project yang login)
+POST   /v1/leaderboard/opt-out      (sesi/key; opt-out idempotent)
 POST   /v1/keys              (sesi)
 DELETE /v1/keys/:id          (sesi)
 POST   /v1/dev/credits       (hanya non-produksi; seed credits)
