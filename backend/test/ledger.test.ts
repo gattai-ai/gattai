@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { db } from "../src/db";
-import { ledgerEntries, projects, runs } from "../src/db/schema";
+import { holderCostLedger, ledgerEntries, projects, runs } from "../src/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { newId } from "../src/lib/id";
 import {
@@ -149,6 +149,47 @@ describe("ledger", () => {
     expect(row.chargedMicro).toBe(1200);
     expect(row.output).toEqual({ ok: true });
     expect(await getBalanceMicro(fresh)).toBe(3800);
+  });
+
+  test("settleRun mencatat holder cost atomik dan idempoten", async () => {
+    const fresh = await createProject();
+    const runId = newId("run");
+    await db.insert(runs).values({
+      id: runId,
+      projectId: fresh,
+      recipeId: "refine",
+      recipeVersion: 1,
+      status: "RUNNING",
+      mode: "streaming",
+      input: "holder cost",
+      isHolder: true,
+      holderTier: "pilot",
+      idempotencyKey: newId("idem"),
+    });
+
+    const input = {
+      projectId: fresh,
+      runId,
+      reservedMicro: 0,
+      chargedMicro: 0,
+      finalStatus: "SETTLED" as const,
+      providerCostUsd: 0.25,
+    };
+    await settleRun(input);
+    await settleRun(input);
+
+    const rows = await db
+      .select()
+      .from(holderCostLedger)
+      .where(eq(holderCostLedger.runId, runId));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].costUsd).toBe("0.25000000");
+    expect(rows[0].wallet).toBe(`0x${fresh.slice(-40)}`.toLowerCase());
+    expect(rows[0].tier).toBe("pilot");
+
+    await db.delete(holderCostLedger).where(eq(holderCostLedger.runId, runId));
+    await db.delete(runs).where(eq(runs.id, runId));
+    await db.delete(projects).where(eq(projects.id, fresh));
   });
 
   test("reverseCredit idempoten tidak mengurangi lot dua kali", async () => {

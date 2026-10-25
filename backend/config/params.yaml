@@ -59,6 +59,14 @@ holder:
   daily_budget_usd: 50.0
   # Interval snapshot saldo onchain (jam).
   snapshot_interval_hours: 24
+  # Batas konkurensi RPC, ukuran batch keyset, dan jitter interval.
+  snapshot_concurrency: 5
+  snapshot_batch_size: 500
+  snapshot_jitter_ratio: 0.1
+  # Retensi: hapus snapshot lebih tua dari 90 hari, tetapi selalu simpan
+  # minimal 10 snapshot terbaru per wallet untuk audit.
+  snapshot_retention_days: 90
+  snapshot_retention_min_per_wallet: 10
   # Jumlah snapshot berurutan yang harus memenuhi threshold agar tier aktif.
   consecutive_snapshots_required: 2
   # Definisi tingkatan tier holder.
@@ -86,11 +94,11 @@ holder:
     - id: admiral
       name: Fleet Admiral
       min_tokens: "250000"
-      free_runs_per_day: 40
-      free_media_per_day: 5
+      free_runs_per_day: 50
+      free_media_per_day: 3
       badge: gold
       perks:
-        - "40 free text runs every day"
-        - "5 free media generations every day"
+        - "50 free text runs every day"
+        - "3 free media generations every day"
         - "VIP processing priority"
         - "Early access to upcoming formations"

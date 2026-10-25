@@ -113,6 +113,27 @@
       "when": 1792827062924,
       "tag": "0015_daffy_skrulls",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792894397576,
+      "tag": "0016_swift_baron_strucker",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792894735180,
+      "tag": "0017_fast_magus",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792925158073,
+      "tag": "0018_unknown_karen_page",
+      "breakpoints": true
     }
   ]
 }

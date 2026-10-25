@@ -572,9 +572,13 @@ export interface HolderBudgetData {
   resets_at: string;
 }
 
+export type HolderSnapshotStatus = "ok" | "pending" | "stale" | "unavailable";
+
 export interface HolderStatusResponse {
   tier: HolderTierItem | null;
   snapshot: HolderSnapshotData | null;
+  snapshot_status: HolderSnapshotStatus;
+  snapshot_stale: boolean;
   free_runs: HolderQuotaData;
   next_tier: NextTierProgressData | null;
   pending: PendingTierData;

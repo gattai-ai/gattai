@@ -12,6 +12,12 @@
 		}
 	}
 
+	# Health backend (termasuk /health/holder). Tanpa strip prefix; backend
+	# mengatur Cache-Control: no-store untuk status worker.
+	handle /health* {
+		reverse_proxy backend:3000
+	}
+
 	# Halaman share + OG image dirender backend (meta crawler + PNG 1200×630).
 	# Frontend static lain tetap dilayani file_server di bawah.
 	handle /run/* {

@@ -8,9 +8,13 @@ import { newId } from "../src/lib/id";
 import {
   DAILY_RUN_CAP,
   getLeaderboardRanking,
+  getLeaderboardTop,
+  LEADERBOARD_LIMIT,
   leaderboardDisplayName,
   leaderboardMeRank,
   leaderboardRankOf,
+  type LeaderboardRanking,
+  type ProjectWeekStat,
 } from "../src/leaderboard/service";
 import { weekWindow } from "../src/leaderboard/week";
 
@@ -131,11 +135,22 @@ describe("leaderboard aggregation", () => {
     const wallet = randomWallet();
     process.env.LEADERBOARD_EXCLUDED_WALLETS = wallet;
     const project = await newProject("excluded-wallet", wallet);
-    await seedRuns(project.id, 5, DAY_ONE);
+    // Cukup banyak untuk masuk top-20 jika filter SQL gagal.
+    await seedRuns(project.id, 500, DAY_ONE);
 
     const ranking = await getLeaderboardRanking(PREV);
     expect(findStat(ranking, project.id)?.excluded).toBe(true);
     expect(ranking.ranked.some((stat) => stat.projectId === project.id)).toBe(false);
+
+    const publicResponse = await app.request("/v1/public/leaderboard?week=previous");
+    const publicBody = (await publicResponse.json()) as {
+      entries: Array<{ display_name: string }>;
+    };
+    expect(
+      publicBody.entries.some(
+        (entry) => entry.display_name === leaderboardDisplayName(project.id),
+      ),
+    ).toBe(false);
   });
 
   test("wallet tim dari TEAM_BURN_WALLETS dikecualikan otomatis", async () => {
@@ -155,12 +170,22 @@ describe("leaderboard aggregation", () => {
     }
   });
 
-  test("public response top 20, tanpa wallet/project id", async () => {
+  test("public response top 20 identik dengan ranking penuh, tanpa wallet/project id", async () => {
     const projectsToSeed = 21;
     for (let index = 0; index < projectsToSeed; index += 1) {
       const project = await newProject(`top20-${index}`);
       await seedRuns(project.id, 1, DAY_ONE);
     }
+
+    const ranking = await getLeaderboardRanking(PREV);
+    const expected = ranking.ranked.slice(0, LEADERBOARD_LIMIT).map((entry) => ({
+      display_name: entry.displayName,
+      runs: entry.runs,
+    }));
+    const top = await getLeaderboardTop(PREV);
+    expect(top.map((entry) => ({ display_name: entry.displayName, runs: entry.runs }))).toEqual(
+      expected,
+    );
 
     const response = await app.request("/v1/public/leaderboard?week=previous");
     expect(response.status).toBe(200);
@@ -176,11 +201,17 @@ describe("leaderboard aggregation", () => {
     expect(body.entries).toHaveLength(20);
     expect(body.me).toBeNull();
     expect(new Date(body.updated_at).toString()).not.toBe("Invalid Date");
+    expect(
+      body.entries.map((entry) => ({
+        display_name: String(entry.display_name),
+        runs: Number(entry.runs),
+      })),
+    ).toEqual(expected);
 
     for (const [index, entry] of body.entries.entries()) {
       expect(entry.rank).toBe(index + 1);
       expect(typeof entry.display_name).toBe("string");
-      expect(String(entry.display_name)).toMatch(/^Project [0-9a-f]{4}$/);
+      expect(String(entry.display_name)).toMatch(/^Project [0-9a-f]{8}$/);
       expect(typeof entry.runs).toBe("number");
       expect(entry.is_me).toBe(false);
       expect(entry).not.toHaveProperty("project_id");
@@ -277,6 +308,62 @@ describe("leaderboard opt-out & me", () => {
     expect(body.me.runs).toBe(4);
     expect(body.me.opted_out).toBe(false);
     expect(body.me.display_name).toBe(leaderboardDisplayName(project.id));
+  });
+
+  test("rank me di luar top 20 memakai tie-break project_id", () => {
+    const target: ProjectWeekStat = {
+      projectId: "prj_target",
+      displayName: "Project target",
+      runs: 1,
+      optedOut: false,
+      excluded: false,
+    };
+    const others: ProjectWeekStat[] = Array.from({ length: 24 }, (_, index) => ({
+      projectId: `prj_other_${String(index).padStart(2, "0")}`,
+      displayName: `Project other-${index}`,
+      runs: 10,
+      optedOut: false,
+      excluded: false,
+    }));
+    const ranking: LeaderboardRanking = {
+      window: PREV,
+      // `ranked` adalah ranking penuh; target tetap ada di sini walau berada
+      // di luar 20 besar. Route publik yang memotong top-20.
+      ranked: [target, ...others].sort(
+        (a, b) => b.runs - a.runs || a.projectId.localeCompare(b.projectId),
+      ),
+      stats: [target, ...others],
+      updatedAt: new Date(),
+    };
+
+    expect(leaderboardRankOf(ranking, target.projectId)).toBe(25);
+    expect(leaderboardMeRank(ranking, target.projectId)).toBe(25);
+  });
+
+  test("tie-break ranking dan rank me sama-sama memakai project_id", () => {
+    const a: ProjectWeekStat = {
+      projectId: "prj_a",
+      displayName: "Project zzz",
+      runs: 5,
+      optedOut: false,
+      excluded: false,
+    };
+    const b: ProjectWeekStat = {
+      projectId: "prj_b",
+      displayName: "Project aaa",
+      runs: 5,
+      optedOut: false,
+      excluded: false,
+    };
+    const ranking: LeaderboardRanking = {
+      window: PREV,
+      ranked: [a, b],
+      stats: [a, b],
+      updatedAt: new Date(),
+    };
+
+    expect(leaderboardRankOf(ranking, "prj_b")).toBe(2);
+    expect(leaderboardMeRank(ranking, "prj_b")).toBe(2);
   });
 
   test("week tidak sah ditolak 400", async () => {

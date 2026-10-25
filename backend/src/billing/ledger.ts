@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gt, inArray, sql } from "drizzle-orm";
 import { db } from "../db";
-import { creditLots, ledgerEntries, runs } from "../db/schema";
+import { creditLots, holderCostLedger, ledgerEntries, projects, runs } from "../db/schema";
 import { newId } from "../lib/id";
 
 /**
@@ -321,6 +321,32 @@ export async function settleRun(input: {
             inArray(runs.status, ["CREATED", "RESERVED", "RUNNING", "RELEASED"]),
           ),
         );
+    }
+
+    // Audit biaya holder ikut transaksi settlement. Sebelumnya insert ini
+    // dilakukan setelah `settleRun`, sehingga crash di antaranya membuat biaya
+    // provider hilang dari ledger subsidi. Unique `run_id` menjaga retry.
+    if (input.providerCostUsd !== undefined && input.providerCostUsd > 0) {
+      const [holderRun] = await tx
+        .select({ holderTier: runs.holderTier, wallet: projects.ownerWallet })
+        .from(runs)
+        .innerJoin(projects, eq(runs.projectId, projects.id))
+        .where(and(eq(runs.id, input.runId), eq(runs.isHolder, true)))
+        .limit(1);
+
+      if (holderRun?.holderTier) {
+        await tx
+          .insert(holderCostLedger)
+          .values({
+            id: newId("hcl"),
+            runId: input.runId,
+            projectId: input.projectId,
+            wallet: holderRun.wallet.toLowerCase(),
+            tier: holderRun.holderTier,
+            costUsd: input.providerCostUsd.toFixed(8),
+          })
+          .onConflictDoNothing({ target: holderCostLedger.runId });
+      }
     }
   });
 }

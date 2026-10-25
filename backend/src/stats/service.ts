@@ -245,7 +245,14 @@ export async function getRevenueStats(now = new Date()): Promise<RevenueStats> {
     }
   }
 
-  const chargedMicro = Number(chargedRow[0]?.totalCharged || 0);
+  const chargedMicroRaw = chargedRow[0]?.totalCharged ?? "0";
+  let chargedMicro: bigint;
+  try {
+    chargedMicro = BigInt(chargedMicroRaw);
+  } catch {
+    // Fallback untuk driver yang mengembalikan "123.000000".
+    chargedMicro = BigInt(Math.trunc(Number(chargedMicroRaw) || 0));
+  }
   const settledCredits = microToCreditsString(chargedMicro);
   const settledUsd = microToUsdString(chargedMicro);
 
@@ -314,22 +321,17 @@ export async function getBurnStatsForStats(now = new Date()): Promise<BurnsStats
 
 /**
  * Statistik penggunaan kuota holder gratis dan subsidi biaya protokol.
- * Mengagregasi run settled bertanda `isHolder = true` dan data audit `holderCostLedger`.
+ *
+ * Jumlah run diambil dari run `SETTLED` bertanda `isHolder = true`. Biaya
+ * subsidi 30 hari diambil dari `holder_cost_ledger.created_at`; run gagal
+ * sebelum settlement tidak memiliki baris ledger dan tidak dihitung.
  */
 export async function getHolderStats(now = new Date()): Promise<HolderStatsSection> {
   const time24hAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const time7dAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const time30dAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 29));
 
-  const [
-    totalRow,
-    row24h,
-    row7d,
-    tierRows,
-    dailyRows,
-    costLedgerSumRow,
-    poolSumRow,
-  ] = await Promise.all([
+  const [totalRow, row24h, row7d, tierRows, dailyRows, poolSumRow] = await Promise.all([
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(runs)
@@ -362,27 +364,18 @@ export async function getHolderStats(now = new Date()): Promise<HolderStatsSecti
       .from(runs)
       .where(and(eq(runs.isHolder, true), eq(runs.status, "SETTLED")))
       .groupBy(runs.holderTier),
+    // Cost ledger ditulis atomik saat settlement. Memakai `created_at` ledger
+    // membuat total 30 hari dan grafik harian berasal dari sumber yang sama.
+    // Run gagal sebelum settlement tidak punya baris ledger dan tidak dihitung.
     db
       .select({
-        day: sql<string>`date(${runs.finishedAt} at time zone 'UTC')`.as("day"),
+        day: sql<string>`date(${holderCostLedger.createdAt} at time zone 'UTC')`.as("day"),
         count: sql<number>`count(*)::int`.as("count"),
         costSum: sql<string>`coalesce(sum(${holderCostLedger.costUsd}), 0)`.as("cost_sum"),
       })
-      .from(runs)
-      .leftJoin(holderCostLedger, eq(holderCostLedger.runId, runs.id))
-      .where(
-        and(
-          eq(runs.isHolder, true),
-          eq(runs.status, "SETTLED"),
-          gte(runs.finishedAt, time30dAgo),
-        ),
-      )
-      .groupBy(sql`date(${runs.finishedAt} at time zone 'UTC')`),
-    db
-      .select({
-        totalCost: sql<string>`coalesce(sum(${holderCostLedger.costUsd}), 0)`.as("total_cost"),
-      })
-      .from(holderCostLedger),
+      .from(holderCostLedger)
+      .where(gte(holderCostLedger.createdAt, time30dAgo))
+      .groupBy(sql`date(${holderCostLedger.createdAt} at time zone 'UTC')`),
     db
       .select({
         totalPool: sql<string>`coalesce(sum(${holderFeeAllocations.amountUsd}), 0)`.as("total_pool"),
@@ -428,7 +421,10 @@ export async function getHolderStats(now = new Date()): Promise<HolderStatsSecti
     subsidized_usd: formatUsd8String(dailyCostMap.get(date) ?? 0n),
   }));
 
-  const totalCostUsd8 = parseUsd8(costLedgerSumRow[0]?.totalCost);
+  // Total sengaja dihitung dari peta harian, bukan query terpisah, supaya
+  // `subsidized_cost_usd` selalu sama dengan jumlah `daily[].subsidized_usd`.
+  let totalCostUsd8 = 0n;
+  for (const cost of dailyCostMap.values()) totalCostUsd8 += cost;
   const totalPoolUsd8 = parseUsd8(poolSumRow[0]?.totalPool);
 
   return {

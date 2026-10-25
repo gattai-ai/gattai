@@ -13,7 +13,7 @@ import {
   listTokenBurns,
 } from "../burn/token-burns";
 import { getPublicHolderTiers } from "../holder/service";
-import { getLeaderboardRanking, LEADERBOARD_LIMIT } from "../leaderboard/service";
+import { getLeaderboardTop } from "../leaderboard/service";
 import { leaderboardWeekSchema, serializeWeek, weekWindow } from "../leaderboard/week";
 import { serializePublicRun } from "../serialize-public";
 import { getPublicSharedRun } from "../services/shares";
@@ -56,6 +56,10 @@ publicRoutes.get("/deposits/config", async (c) => {
     }),
   );
 
+  // Konfigurasi top-up berisi harga live; cache pendek agar tidak membebani
+  // price provider tetapi tetap cepat berubah.
+  c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=30");
+
   return c.json({
     chain_id: env.chainId,
     deposit_manager: env.depositManagerAddress ?? null,
@@ -93,20 +97,22 @@ publicRoutes.get("/runs/:slug", async (c) => {
  */
 publicRoutes.get("/leaderboard", async (c) => {
   const week = leaderboardWeekSchema.parse(c.req.query("week") ?? "current");
-  const ranking = await getLeaderboardRanking(weekWindow(week));
+  const window = weekWindow(week);
+  const entries = await getLeaderboardTop(window);
+  const updatedAt = new Date();
 
   c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=30");
 
   return c.json({
-    week: serializeWeek(ranking.window),
-    entries: ranking.ranked.slice(0, LEADERBOARD_LIMIT).map((entry, index) => ({
+    week: serializeWeek(window),
+    entries: entries.map((entry, index) => ({
       rank: index + 1,
       display_name: entry.displayName,
       runs: entry.runs,
       is_me: false,
     })),
     me: null,
-    updated_at: ranking.updatedAt.toISOString(),
+    updated_at: updatedAt.toISOString(),
   });
 });
 
@@ -210,6 +216,8 @@ publicRoutes.get("/burns", async (c) => {
  * `/v1/recipes`: hanya id + nama + boolean — tanpa nama provider/env.
  */
 publicRoutes.get("/formations", (c) => {
+  // Daftar formasi hanya berubah saat deploy/config reload; cache lebih lama.
+  c.header("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
   return c.json({
     formations: getConfig().recipes.map((recipe) => ({
       id: recipe.id,

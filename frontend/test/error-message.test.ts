@@ -26,6 +26,20 @@ describe("errorMessage: pemetaan kode backend", () => {
     expect(errorMessage(new ApiError(402, "TRIAL_MEDIA_EXHAUSTED", "x"))).toContain("free media runs");
   });
 
+  test("kode holder dipetakan tanpa kode mentah", () => {
+    const budget = errorMessage(new ApiError(402, "HOLDER_BUDGET_EXHAUSTED", "x"));
+    expect(budget).toContain("budget is used up");
+    expect(budget).not.toContain("HOLDER_");
+
+    const quota = errorMessage(new ApiError(402, "HOLDER_QUOTA_EXHAUSTED", "x"));
+    expect(quota).toContain("holder free-run quota");
+    expect(quota).not.toContain("HOLDER_");
+
+    const paused = errorMessage(new ApiError(402, "HOLDER_RUNS_PAUSED", "x"));
+    expect(paused).toContain("temporarily paused");
+    expect(paused).not.toContain("HOLDER_");
+  });
+
   test("request terlalu besar dan limit run dipetakan ramah", () => {
     expect(errorMessage(new ApiError(413, "REQUEST_TOO_LARGE", "x"))).toContain("too large");
     expect(errorMessage(new ApiError(500, "RUN_LIMIT_REACHED", "x"))).toContain(

@@ -35,22 +35,34 @@ function explorerAddressUrl(address: string): string {
 
 /**
  * Cek apakah DepositManager dalam status paused via RPC onchain.
- * Mengembalikan `null` bila query gagal atau RPC tidak terkonfigurasi.
+ * Mengembalikan `null` bila query gagal, timeout, atau RPC tidak terkonfigurasi.
+ *
+ * `/stats` adalah endpoint publik yang di-cache; satu RPC yang menggantung tidak
+ * boleh menahan seluruh response. Batas 1,5 detik cukup untuk RPC normal dan
+ * membuat status jatuh ke `null` (tidak diverifikasi) saat jaringan lambat.
  */
 export async function fetchDepositManagerPaused(
   contractAddress: string,
 ): Promise<boolean | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     if (!env.robinhoodRpcUrl) return null;
     const client = createRobinhoodClient();
-    const paused = await client.readContract({
-      address: contractAddress as `0x${string}`,
-      abi: depositManagerAbi,
-      functionName: "paused",
-    });
+    const paused = await Promise.race([
+      client.readContract({
+        address: contractAddress as `0x${string}`,
+        abi: depositManagerAbi,
+        functionName: "paused",
+      }),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("RPC timeout")), 1500);
+      }),
+    ]);
     return Boolean(paused);
   } catch {
     return null;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 

@@ -150,6 +150,27 @@ export function HoldersPage() {
         </div>
       )}
 
+      {isAuthenticated && status?.snapshot_status === "unavailable" && (
+        <div className="holders-banner warning" role="alert">
+          <span>📡</span>
+          <span>
+            <strong>Snapshot service is temporarily unavailable.</strong> Your tier and quota
+            will update after the next successful wallet scan. Nothing is wrong with your
+            holdings.
+          </span>
+        </div>
+      )}
+
+      {isAuthenticated && status?.snapshot_status === "stale" && (
+        <div className="holders-banner warning" role="alert">
+          <span>🕒</span>
+          <span>
+            <strong>Your holder snapshot is older than expected.</strong> Tier data may be
+            delayed until the next snapshot cycle completes.
+          </span>
+        </div>
+      )}
+
       {isAuthenticated && status?.pending?.message && (
         <div className="holders-banner pending">
           <span>⚡</span>
@@ -205,7 +226,9 @@ export function HoldersPage() {
                   ? `${formatTokenDisplay(status.snapshot.balance)} $GATTAI`
                   : statusQuery.isLoading
                     ? "Loading…"
-                    : "Waiting for first snapshot"}
+                    : status?.snapshot_status === "unavailable"
+                      ? "Snapshot data temporarily unavailable"
+                      : "Waiting for first snapshot"}
               </div>
               <div className="holders-snapshot-meta">
                 {status?.snapshot ? (
@@ -221,6 +244,8 @@ export function HoldersPage() {
                       View on Blockscout ↗
                     </a>
                   </>
+                ) : status?.snapshot_status === "unavailable" ? (
+                  <span>We could not reach the snapshot service. We will retry automatically.</span>
                 ) : (
                   <span>Snapshot balance will record upon your first wallet scan.</span>
                 )}

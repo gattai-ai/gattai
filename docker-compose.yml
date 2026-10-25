@@ -25,6 +25,10 @@ services:
       dockerfile: backend/Dockerfile
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Safe default: holder runs stay off unless .env explicitly enables them.
+      # deploy.sh refuses HOLDER_RUNS_ENABLED=true unless ENABLE_HOLDER=1.
+      HOLDER_RUNS_ENABLED: ${HOLDER_RUNS_ENABLED:-false}
     depends_on:
       db:
         condition: service_healthy

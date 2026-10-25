@@ -1,12 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { randomBytes } from "node:crypto";
+import { eq } from "drizzle-orm";
 import app from "../src/app";
 import { db } from "../src/db";
-import { deposits, projects, runs } from "../src/db/schema";
+import { deposits, holderCostLedger, projects, runs } from "../src/db/schema";
 import { newId } from "../src/lib/id";
 import { getContractsStats } from "../src/stats/contracts";
 import {
   formatUsdgAmount,
+  getHolderStats,
   getLast30DaysUtc,
   getRevenueStats,
   getUsageStats,
@@ -163,5 +165,87 @@ describe("stats service & endpoints", () => {
     // USDG deposit bertambah
     const usdgNum = Number(revenue.deposits_usdg);
     expect(usdgNum).toBeGreaterThanOrEqual(100);
+  });
+
+  test("P2-10: biaya 30 hari dan daily memakai holder_cost_ledger.created_at", async () => {
+    const projectId = await createTestProject();
+    const now = new Date();
+    const runWithCost = newId("run");
+    const runWithoutCost = newId("run");
+    const wallet = `0x${randomBytes(20).toString("hex")}`;
+
+    try {
+      // Baseline sebelum data uji dimasukkan; suite lain boleh punya data.
+      const before = await getHolderStats(now);
+
+      await db.insert(runs).values([
+        {
+          id: runWithCost,
+          projectId,
+          recipeId: "refine",
+          status: "SETTLED",
+          input: "holder cost ledger test",
+          reservedMicro: 0,
+          chargedMicro: 0,
+          isHolder: true,
+          holderTier: "pilot",
+          idempotencyKey: randomHex(16),
+          finishedAt: now,
+        },
+        {
+          id: runWithoutCost,
+          projectId,
+          recipeId: "refine",
+          status: "SETTLED",
+          input: "holder run without ledger",
+          reservedMicro: 0,
+          chargedMicro: 0,
+          isHolder: true,
+          holderTier: "pilot",
+          idempotencyKey: randomHex(16),
+          finishedAt: now,
+        },
+      ]);
+      await db.insert(holderCostLedger).values({
+        id: newId("hcl"),
+        runId: runWithCost,
+        projectId,
+        wallet,
+        tier: "pilot",
+        costUsd: "0.25000000",
+        createdAt: now,
+      });
+
+      const after = await getHolderStats(now);
+      const today = now.toISOString().slice(0, 10);
+      const beforeToday = before.daily.find((day) => day.date === today);
+      const afterToday = after.daily.find((day) => day.date === today);
+      expect(beforeToday).toBeDefined();
+      expect(afterToday).toBeDefined();
+
+      // Dua run SETTLED menambah count run, tetapi hanya satu baris ledger
+      // yang menambah biaya dan count harian.
+      expect(after.total_runs).toBe(before.total_runs + 2);
+      expect(after.runs_24h).toBe(before.runs_24h + 2);
+      expect(afterToday!.count).toBe(beforeToday!.count + 1);
+      expect(Number(afterToday!.subsidized_usd)).toBeCloseTo(
+        Number(beforeToday!.subsidized_usd) + 0.25,
+        8,
+      );
+
+      // Acceptance: total 30 hari harus sama dengan jumlah daily.
+      const dailySum = after.daily.reduce(
+        (sum, day) => sum + Number(day.subsidized_usd),
+        0,
+      );
+      expect(dailySum).toBeCloseTo(Number(after.subsidized_cost_usd), 8);
+      expect(Number(after.subsidized_cost_usd)).toBeCloseTo(
+        Number(before.subsidized_cost_usd) + 0.25,
+        8,
+      );
+    } finally {
+      await db.delete(runs).where(eq(runs.projectId, projectId));
+      await db.delete(projects).where(eq(projects.id, projectId));
+    }
   });
 });

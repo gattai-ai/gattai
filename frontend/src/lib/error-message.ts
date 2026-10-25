@@ -22,6 +22,13 @@ const CODE_MESSAGES: Record<string, string> = {
   TRIAL_ATTEMPTS_EXHAUSTED: "Free trial attempts are used up. Top up to keep going.",
   TRIAL_MEDIA_EXHAUSTED:
     "Your free media runs are used up. Text prompts are still free — top up to run this formation.",
+  // Kuota holder (free runs berbasis tier $GATTAI).
+  HOLDER_BUDGET_EXHAUSTED:
+    "Today's holder free-run budget is used up. Top up to continue, or try again after 00:00 UTC.",
+  HOLDER_QUOTA_EXHAUSTED:
+    "You've used today's holder free-run quota. Top up to continue, or come back after 00:00 UTC.",
+  HOLDER_RUNS_PAUSED:
+    "Holder free runs are temporarily paused. Top up to continue while we finish maintenance.",
   // Autentikasi & izin.
   UNAUTHORIZED: "Your session expired. Sign in again.",
   SIWE_INVALID: "Sign-in could not be verified. Try again.",

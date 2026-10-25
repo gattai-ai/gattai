@@ -7,6 +7,7 @@ import { allowedOrigins, credentialsAllowed } from "./lib/origins";
 import { securityHeaders } from "./middleware/security-headers";
 import { ogRoutes } from "./og/routes";
 import { api } from "./routes";
+import { getHolderWorkerHealth } from "./holder/worker-state";
 
 const app = new Hono();
 
@@ -23,6 +24,26 @@ app.use(
 );
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+/**
+ * Health worker snapshot holder.
+ *
+ * Hanya agregat (tanpa wallet/alamat). 503 bila worker stale/degraded agar
+ * alerting bisa memakai status HTTP tanpa parsing body.
+ */
+app.get("/health/holder", async (c) => {
+  c.header("Cache-Control", "no-store");
+  try {
+    const health = await getHolderWorkerHealth();
+    const healthy =
+      health.status === "ok" ||
+      health.status === "disabled" ||
+      health.status === "running";
+    return c.json(health, healthy ? 200 : 503);
+  } catch {
+    return c.json({ status: "unavailable" }, 503);
+  }
+});
 
 // Halaman share + OG image. Di produksi Caddy mem-proxy /run/* ke sini.
 app.route("/", ogRoutes);

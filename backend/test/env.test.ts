@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { reloadConfig } from "../src/config";
 import {
   assertProductionConfig,
   env,
@@ -48,6 +49,15 @@ type EnvKey =
   | "ALLOW_UNVERIFIED_USDG"
   | "INDEXER_REORG_LOOKBACK"
   | "TRIAL_FREE_MEDIA_ATTEMPTS"
+  | "HOLDER_SNAPSHOT_INTERVAL_HOURS"
+  | "HOLDER_SNAPSHOT_INTERVAL_MINUTES"
+  | "HOLDER_TIER_MIN_GAP_MINUTES"
+  | "HOLDER_SNAPSHOT_CONCURRENCY"
+  | "HOLDER_SNAPSHOT_BATCH_SIZE"
+  | "HOLDER_SNAPSHOT_JITTER_RATIO"
+  | "HOLDER_SNAPSHOT_CONFIRMATIONS"
+  | "HOLDER_SNAPSHOT_RETENTION_DAYS"
+  | "HOLDER_SNAPSHOT_RETENTION_MIN_PER_WALLET"
   | "PORT";
 
 const KEYS: EnvKey[] = [
@@ -81,6 +91,15 @@ const KEYS: EnvKey[] = [
   "ALLOW_UNVERIFIED_USDG",
   "INDEXER_REORG_LOOKBACK",
   "TRIAL_FREE_MEDIA_ATTEMPTS",
+  "HOLDER_SNAPSHOT_INTERVAL_HOURS",
+  "HOLDER_SNAPSHOT_INTERVAL_MINUTES",
+  "HOLDER_TIER_MIN_GAP_MINUTES",
+  "HOLDER_SNAPSHOT_CONCURRENCY",
+  "HOLDER_SNAPSHOT_BATCH_SIZE",
+  "HOLDER_SNAPSHOT_JITTER_RATIO",
+  "HOLDER_SNAPSHOT_CONFIRMATIONS",
+  "HOLDER_SNAPSHOT_RETENTION_DAYS",
+  "HOLDER_SNAPSHOT_RETENTION_MIN_PER_WALLET",
   "PORT",
 ];
 
@@ -91,12 +110,15 @@ function withPatchedEnv(patch: Partial<Record<EnvKey, string | undefined>>, fn: 
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+    // `getParams()` di-cache; preflight harus melihat env yang baru dipatch.
+    reloadConfig();
     fn();
   } finally {
     for (const [key, value] of saved) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
+    reloadConfig();
   }
 }
 
@@ -256,10 +278,55 @@ describe("preflight produksi mainnet", () => {
     ALLOW_MANUAL_PRICES: "false",
     ALLOW_UNVERIFIED_USDG: "false",
     TRIAL_FREE_MEDIA_ATTEMPTS: "0",
+    HOLDER_SNAPSHOT_INTERVAL_HOURS: "24",
+    HOLDER_SNAPSHOT_INTERVAL_MINUTES: undefined,
+    HOLDER_TIER_MIN_GAP_MINUTES: undefined,
+    HOLDER_SNAPSHOT_CONCURRENCY: "5",
+    HOLDER_SNAPSHOT_BATCH_SIZE: "500",
+    HOLDER_SNAPSHOT_JITTER_RATIO: "0.1",
+    HOLDER_SNAPSHOT_CONFIRMATIONS: "60",
+    HOLDER_SNAPSHOT_RETENTION_DAYS: "90",
+    HOLDER_SNAPSHOT_RETENTION_MIN_PER_WALLET: "10",
   };
 
   test("konfigurasi USDG-only yang lengkap → lolos", () => {
     withPatchedEnv(base, () => {
+      expect(() => assertProductionConfig()).not.toThrow();
+    });
+  });
+
+  test("override menit staging ditolak di produksi", () => {
+    withPatchedEnv({ ...base, HOLDER_SNAPSHOT_INTERVAL_MINUTES: "2" }, () => {
+      expect(() => assertProductionConfig()).toThrow("staging-only");
+    });
+  });
+
+  test("tier gap menit ditolak di produksi", () => {
+    withPatchedEnv({ ...base, HOLDER_TIER_MIN_GAP_MINUTES: "1" }, () => {
+      expect(() => assertProductionConfig()).toThrow("staging-only");
+    });
+  });
+
+  test("interval terlalu pendek terhadap jitter ditolak", () => {
+    withPatchedEnv({ ...base, HOLDER_SNAPSHOT_INTERVAL_HOURS: "13" }, () => {
+      expect(() => assertProductionConfig()).toThrow("too short");
+    });
+  });
+
+  test("interval 14 jam dengan jitter 10% masih lolos", () => {
+    withPatchedEnv({ ...base, HOLDER_SNAPSHOT_INTERVAL_HOURS: "14" }, () => {
+      expect(() => assertProductionConfig()).not.toThrow();
+    });
+  });
+
+  test("HOLDER_SNAPSHOT_CONFIRMATIONS kurang dari 12 → gagal", () => {
+    withPatchedEnv({ ...base, HOLDER_SNAPSHOT_CONFIRMATIONS: "11" }, () => {
+      expect(() => assertProductionConfig()).toThrow("12");
+    });
+  });
+
+  test("HOLDER_SNAPSHOT_CONFIRMATIONS 12 lolos", () => {
+    withPatchedEnv({ ...base, HOLDER_SNAPSHOT_CONFIRMATIONS: "12" }, () => {
       expect(() => assertProductionConfig()).not.toThrow();
     });
   });

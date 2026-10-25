@@ -32,24 +32,44 @@ export function microToCredits(micro: number): number {
 }
 
 /** Format integer micro-credits menjadi string credits 6 desimal (tanpa float). */
-export function microToCreditsString(micro: number): string {
+export function microToCreditsString(micro: number | bigint): string {
   return formatMicro(micro, 6);
 }
 
 /** Format integer micro-credits menjadi string USD 8 desimal (tanpa float). */
-export function microToUsdString(micro: number): string {
+export function microToUsdString(micro: number | bigint): string {
   return formatMicro(micro, 8);
+}
+
+/**
+ * Parse string USD (maksimal 8 desimal) menjadi integer micro-USD.
+ * Dipakai untuk membandingkan biaya tanpa melewati float.
+ */
+export function usdStringToMicroUsd(value: string): bigint {
+  const trimmed = value.trim();
+  const negative = trimmed.startsWith("-");
+  const [wholeRaw, fractionRaw = ""] = (negative ? trimmed.slice(1) : trimmed).split(".");
+  const whole = BigInt(wholeRaw || "0");
+  const fraction = BigInt((fractionRaw + "00000000").slice(0, 8) || "0");
+  const result = whole * 100_000_000n + fraction;
+  return negative ? -result : result;
+}
+
+/** Angka USD konfigurasi → integer micro-USD. */
+export function usdToMicroUsd(usd: number): bigint {
+  return usdStringToMicroUsd(usd.toFixed(8));
 }
 
 /**
  * Bagi integer micro dengan `10^scale` memakai aritmetika integer supaya nilai
  * uang tidak pernah melewati float saat diformat untuk API publik.
  */
-function formatMicro(micro: number, scale: number): string {
-  const negative = micro < 0;
-  const absolute = Math.abs(Math.trunc(micro));
-  const divisor = 10 ** scale;
-  const whole = Math.floor(absolute / divisor);
+function formatMicro(micro: number | bigint, scale: number): string {
+  const value = typeof micro === "bigint" ? micro : BigInt(Math.trunc(micro));
+  const negative = value < 0n;
+  const absolute = negative ? -value : value;
+  const divisor = 10n ** BigInt(scale);
+  const whole = absolute / divisor;
   const fraction = String(absolute % divisor).padStart(scale, "0");
   return `${negative ? "-" : ""}${whole}.${fraction}`;
 }

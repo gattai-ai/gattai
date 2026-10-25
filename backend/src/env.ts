@@ -6,6 +6,9 @@
  * smoke test lokal.
  */
 
+import { MAINNET_CONTRACTS } from "@web3-starter/shared";
+import { getParams } from "./config";
+
 /**
  * Environment variable yang wajib ada tetapi belum diisi.
  *
@@ -100,6 +103,40 @@ export function assertProductionConfig(): void {
   if (env.chainId !== MAINNET_CHAIN_ID) {
     throw new Error(
       `CHAIN_ID must be ${MAINNET_CHAIN_ID} (Robinhood Chain mainnet) when NODE_ENV=production.`,
+    );
+  }
+
+  // Token snapshot holder sengaja terpisah dari BURN_TOKEN_ADDRESS: mengubah
+  // konfigurasi burn tidak boleh mengubah token yang menentukan tier.
+  assertAddress("HOLDER_TOKEN_ADDRESS", env.holderTokenAddress);
+  const holder = getParams().holder;
+  if (holder.enabled && !env.robinhoodRpcUrl) {
+    throw new Error("ROBINHOOD_RPC_URL is required when holder runs are enabled.");
+  }
+  // Snapshot holder harus membaca block yang sudah terkonfirmasi, bukan head.
+  // Default 60 mengikuti finalitas deposit; staging boleh lebih rendah.
+  if (env.holderSnapshotConfirmations < 12) {
+    throw new Error("HOLDER_SNAPSHOT_CONFIRMATIONS must be >= 12 on mainnet.");
+  }
+
+  // Override menit hanya untuk staging/verifikasi cepat. Produksi wajib
+  // memakai interval jam dan jarak tier 12 jam agar aturan anti-flash-loan
+  // tidak melemah tanpa sengaja.
+  if (holder.snapshot_interval_minutes !== undefined) {
+    throw new Error(
+      "HOLDER_SNAPSHOT_INTERVAL_MINUTES is staging-only and must not be set in production.",
+    );
+  }
+  if (holder.tier_min_gap_minutes !== undefined) {
+    throw new Error(
+      "HOLDER_TIER_MIN_GAP_MINUTES is staging-only and must not be set in production.",
+    );
+  }
+  const effectiveMinIntervalHours =
+    holder.snapshot_interval_hours * (1 - holder.snapshot_jitter_ratio);
+  if (effectiveMinIntervalHours <= 12) {
+    throw new Error(
+      "HOLDER_SNAPSHOT_INTERVAL_HOURS is too short: interval minus jitter must be > 12h so two consecutive snapshots can satisfy the holder tier gap.",
     );
   }
 
@@ -365,6 +402,13 @@ export const env = {
   get gattaiTokenAddress(): string | undefined {
     return optionalEnv("GATTAI_TOKEN_ADDRESS");
   },
+  /**
+   * Token yang dipakai untuk snapshot saldo holder. Default token GATTAI resmi.
+   * Terpisah dari `BURN_TOKEN_ADDRESS` agar konfigurasi burn tidak mengubah tier.
+   */
+  get holderTokenAddress(): string {
+    return optionalEnv("HOLDER_TOKEN_ADDRESS") ?? MAINNET_CONTRACTS.token;
+  },
   get usdgTokenAddress(): string | undefined {
     return optionalEnv("USDG_TOKEN_ADDRESS");
   },
@@ -435,6 +479,24 @@ export const env = {
   /** Timeout per permintaan RPC (ms). */
   get rpcTimeoutMs(): number {
     return numberEnv("RPC_TIMEOUT_MS", 15_000, { min: 1000, integer: true });
+  },
+  /**
+   * Timeout khusus pembacaan saldo holder. Lebih pendek dari RPC indexer agar
+   * `/v1/holder/status` tidak menggantung saat RPC lambat.
+   */
+  get holderRpcTimeoutMs(): number {
+    return numberEnv("HOLDER_RPC_TIMEOUT_MS", 3000, { min: 500, max: 30_000, integer: true });
+  },
+  /**
+   * Kedalaman blok untuk snapshot saldo holder. Membaca `latest - N` membuat
+   * snapshot tidak langsung berubah saat terjadi reorg pendek.
+   */
+  get holderSnapshotConfirmations(): number {
+    return numberEnv("HOLDER_SNAPSHOT_CONFIRMATIONS", 60, {
+      min: 0,
+      max: 1000,
+      integer: true,
+    });
   },
   /** Jumlah percobaan ulang per permintaan RPC. */
   get rpcRetryCount(): number {

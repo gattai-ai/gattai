@@ -10,7 +10,6 @@ import { db } from "../db";
 import { runSteps, runs } from "../db/schema";
 import { chargeMicroFromProviderCost, estimateRecipe, resolveMarkup } from "../billing/estimate";
 import { release, reserve, settleRun } from "../billing/ledger";
-import { recordHolderCost } from "../holder/service";
 import { env } from "../env";
 import { newId } from "../lib/id";
 import {
@@ -28,7 +27,6 @@ import {
   getConversationContext,
   maybeRefreshSummary,
 } from "../services/conversations";
-import { getProjectById } from "../services/projects";
 import {
   GATTAI_SYSTEM,
   REVIEWER_SYSTEM,
@@ -527,23 +525,6 @@ export async function executeRun(runId: string, opts: ExecuteOptions = {}): Prom
       providerCostUsd: totalProviderCost,
     });
 
-    if (runRow.isHolder && runRow.holderTier && totalProviderCost > 0) {
-      try {
-        const project = await getProjectById(runRow.projectId);
-        if (project) {
-          await recordHolderCost(
-            runId,
-            runRow.projectId,
-            project.ownerWallet,
-            runRow.holderTier,
-            totalProviderCost.toFixed(8),
-          );
-        }
-      } catch (err) {
-        console.warn(`[run ${runId}] failed to record holder cost on failure:`, err);
-      }
-    }
-
     clearInterval(heartbeat);
     emit(runId, { type: "done", status: "RELEASED" });
     return { status: "RELEASED", chargedMicro, output: null };
@@ -583,23 +564,6 @@ export async function executeRun(runId: string, opts: ExecuteOptions = {}): Prom
     error: null,
     providerCostUsd: totalProviderCost,
   });
-
-  if (runRow.isHolder && runRow.holderTier && totalProviderCost > 0) {
-    try {
-      const project = await getProjectById(runRow.projectId);
-      if (project) {
-        await recordHolderCost(
-          runId,
-          runRow.projectId,
-          project.ownerWallet,
-          runRow.holderTier,
-          totalProviderCost.toFixed(8),
-        );
-      }
-    } catch (err) {
-      console.warn(`[run ${runId}] failed to record holder cost:`, err);
-    }
-  }
 
   clearInterval(heartbeat);
   emit(runId, { type: "done", status: "SETTLED" });

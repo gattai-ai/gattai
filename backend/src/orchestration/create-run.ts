@@ -155,6 +155,11 @@ export async function createRun(input: CreateRunInput): Promise<CreatedRun> {
   const version = await getActiveRecipeVersion(recipe.id);
   const status = recipe.pricing.requires_confirmation ? "AWAITING_CONFIRMATION" : "CREATED";
 
+  // Ambil project SEBELUM transaksi. ownerWallet tidak berubah, dan memakai
+  // koneksi pool kedua di dalam transaksi yang sudah memegang row lock bisa
+  // menyebabkan pool exhaustion saat banyak request bersamaan.
+  const project = await getProjectById(input.projectId);
+
   try {
     return await db.transaction(async (tx) => {
       // Kunci project selama pemeriksaan saldo + pembuatan run; dengan begitu
@@ -186,18 +191,22 @@ export async function createRun(input: CreateRunInput): Promise<CreatedRun> {
       let isTrial = false;
       let isHolder = false;
       let holderTier: string | null = null;
+      let holderReason: string | null = null;
 
       if (trialAvailable) {
         isTrial = true;
       } else {
-        // Cek kelayakan tier holder jika trial sudah habis
-        const project = await getProjectById(input.projectId);
+        // Cek kelayakan tier holder jika trial sudah habis. Pemeriksaan memakai
+        // transaksi yang sama dengan pembuatan run sehingga kuota dibaca
+        // konsisten dengan baris run yang akan dibuat.
         if (project) {
           const holderCheck = await checkHolderEligibility(
             project.ownerWallet,
             input.projectId,
             isMedia,
+            tx,
           );
+          holderReason = holderCheck.reason ?? null;
           if (holderCheck.eligible && holderCheck.tierId) {
             isHolder = true;
             holderTier = holderCheck.tierId;
@@ -206,6 +215,38 @@ export async function createRun(input: CreateRunInput): Promise<CreatedRun> {
       }
 
       if (!isTrial && !isHolder && balance < estimate.reserveMicro) {
+        const topup = { topup_url: "/app/balance", trial };
+
+        // Pesan harus mencerminkan alasan sebenarnya. User holder yang kuota
+        // atau anggaran hariannya habis tidak boleh diberi pesan "trial habis".
+        if (holderReason === "HOLDER_BUDGET_EXHAUSTED") {
+          throw new ApiError(
+            402,
+            "HOLDER_BUDGET_EXHAUSTED",
+            "Holder free runs are paused for today. Top up to continue.",
+            topup,
+          );
+        }
+        if (
+          holderReason === "HOLDER_TEXT_QUOTA_EXHAUSTED" ||
+          holderReason === "HOLDER_MEDIA_QUOTA_EXHAUSTED"
+        ) {
+          throw new ApiError(
+            402,
+            "HOLDER_QUOTA_EXHAUSTED",
+            "Daily holder free-run quota used up. Top up to continue.",
+            topup,
+          );
+        }
+        if (holderReason === "HOLDER_RUNS_PAUSED") {
+          throw new ApiError(
+            402,
+            "HOLDER_RUNS_PAUSED",
+            "Holder free runs are temporarily paused. Top up to continue.",
+            topup,
+          );
+        }
+
         // Tolak sinkron bila saldo di bawah reservasi estimasi (brief §9.2):
         // 402 + link top-up, sebelum run dibuat. Pemeriksaan async di runner
         // tetap menjadi otoritas akhir bila saldo berubah di tengah jalan.
@@ -225,7 +266,7 @@ export async function createRun(input: CreateRunInput): Promise<CreatedRun> {
             : code === "TRIAL_EXHAUSTED"
               ? "Free prompts used up. Top up to continue."
               : "Free media allowance used up. Text prompts are still free — top up to run this formation.";
-        throw new ApiError(402, code, message, { topup_url: "/app/balance", trial });
+        throw new ApiError(402, code, message, topup);
       }
 
       // Percakapan dibuka DI SINI, bukan menunggu runner: dengan begitu chat

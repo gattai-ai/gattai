@@ -1,10 +1,13 @@
 import { serve } from "@hono/node-server";
 import "dotenv/config";
 import app from "./app";
+import { getParams } from "./config";
 import { assertProductionConfig, env, missingProviderKeys } from "./env";
 import { syncRecipes } from "./orchestration/create-run";
 import { startReaper } from "./orchestration/reap";
 import { startBurnIndexer } from "./burn/indexer";
+import { getHolderSnapshotIntervalMs } from "./holder/config";
+import { startHolderSnapshotWorker } from "./holder/snapshot-worker";
 import { startDepositReconciler } from "./onchain/reconciler";
 import { ensureProjectOnchainIds } from "./services/projects";
 
@@ -73,6 +76,7 @@ if (!process.env.DATABASE_URL) {
   // (user menutup tab / confirm gagal sesaat). Non-fatal.
   let depositIndexer: { stop: () => void } | null = null;
   let burnIndexer: { stop: () => void } | null = null;
+  let holderSnapshotWorker: { stop: () => void } | null = null;
 
   startDepositReconciler()
     .then((indexer) => {
@@ -97,9 +101,43 @@ if (!process.env.DATABASE_URL) {
       ),
     );
 
+  // Holder snapshot worker: syarat utama agar tier holder bisa aktif.
+  // Tanpa siklus berkala, aturan dua snapshot berturut-turut tidak pernah
+  // terpenuhi. Worker memakai advisory lock sehingga aman di multi-instance.
+  if (!getParams().holder.enabled) {
+    console.log("[startup] holder snapshot worker dilewati: HOLDER_RUNS_ENABLED=false");
+  } else if (env.robinhoodRpcUrl) {
+    holderSnapshotWorker = startHolderSnapshotWorker({
+      intervalMs: getHolderSnapshotIntervalMs(),
+      runOnStart: true,
+      onCycle: (result) => {
+        if (result.skippedByLock) return;
+        if (result.scanned > 0) {
+          console.log(
+            `[holder-snapshot] ${result.recorded}/${result.scanned} wallet tercatat, ${result.skipped} dilewati`,
+          );
+        }
+        if (result.pruned > 0) {
+          console.log(`[holder-snapshot] ${result.pruned} snapshot lama dipangkas`);
+        }
+        if (result.pruneError) {
+          console.warn("[holder-snapshot] retensi snapshot gagal:", result.pruneError);
+        }
+      },
+      onError: (error) =>
+        console.warn(
+          "[holder-snapshot] siklus gagal:",
+          error instanceof Error ? error.message : error,
+        ),
+    });
+  } else {
+    console.log("[startup] holder snapshot worker dilewati: RPC URL belum diisi");
+  }
+
   const shutdown = () => {
     depositIndexer?.stop();
     burnIndexer?.stop();
+    holderSnapshotWorker?.stop();
     process.exit(0);
   };
   process.once("SIGTERM", shutdown);

@@ -20,7 +20,8 @@
     "doctor": "bun scripts/doctor-deposit.ts",
     "refund:queue": "bun scripts/refund-queue.ts",
     "burn": "bun scripts/burn.ts",
-    "burn:index": "bun scripts/index-burns.ts"
+    "burn:index": "bun scripts/index-burns.ts",
+    "holder:snapshot": "bun scripts/holder-snapshot.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.5",

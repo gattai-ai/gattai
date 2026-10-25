@@ -135,8 +135,25 @@ const paramsSchema = z.object({
       enabled: z.boolean().default(true),
       // Batas anggaran platform harian (USD) untuk subsidi run holder.
       daily_budget_usd: z.number().nonnegative().default(50),
-      // Interval snapshot saldo onchain (jam).
+      // Interval snapshot saldo onchain (jam). Default produksi 24 jam.
       snapshot_interval_hours: z.number().int().positive().default(24),
+      // Override staging untuk mempercepat verifikasi. Produksi menolak nilai
+      // ini lewat `assertProductionConfig`; jangan dipakai di production.
+      snapshot_interval_minutes: z.number().int().positive().optional(),
+      // Jarak minimum dua snapshot agar tier aktif. Default 12 jam.
+      // Override menit hanya untuk staging; produksi wajib 12 jam.
+      tier_min_gap_minutes: z.number().int().positive().optional(),
+      // Batas konkurensi RPC saat mengambil snapshot.
+      snapshot_concurrency: z.number().int().min(1).max(20).default(5),
+      // Ukuran batch keyset saat membaca wallet project aktif. Mencegah satu
+      // query besar untuk puluhan ribu project.
+      snapshot_batch_size: z.number().int().min(1).max(5000).default(500),
+      // Variasi interval untuk menghindari thundering herd antar instance.
+      snapshot_jitter_ratio: z.number().min(0).max(0.5).default(0.1),
+      // Retensi snapshot. Baris lebih tua dari N hari dihapus, tetapi minimal
+      // N snapshot terbaru per wallet selalu dipertahankan untuk audit tier.
+      snapshot_retention_days: z.number().int().min(1).max(3650).default(90),
+      snapshot_retention_min_per_wallet: z.number().int().min(2).max(1000).default(10),
       // Jumlah snapshot berurutan yang harus memenuhi threshold agar tier aktif.
       consecutive_snapshots_required: z.number().int().positive().default(2),
       // Definisi tingkatan tier holder.
@@ -146,6 +163,11 @@ const paramsSchema = z.object({
       enabled: true,
       daily_budget_usd: 50,
       snapshot_interval_hours: 24,
+      snapshot_concurrency: 5,
+      snapshot_batch_size: 500,
+      snapshot_jitter_ratio: 0.1,
+      snapshot_retention_days: 90,
+      snapshot_retention_min_per_wallet: 10,
       consecutive_snapshots_required: 2,
       tiers: [
         {
@@ -178,12 +200,12 @@ const paramsSchema = z.object({
           id: "admiral",
           name: "Fleet Admiral",
           min_tokens: "250000",
-          free_runs_per_day: 40,
-          free_media_per_day: 5,
+          free_runs_per_day: 50,
+          free_media_per_day: 3,
           badge: "gold",
           perks: [
-            "40 free text runs every day",
-            "5 free media generations every day",
+            "50 free text runs every day",
+            "3 free media generations every day",
             "VIP processing priority",
             "Early access to upcoming formations",
           ],
@@ -257,15 +279,21 @@ function crossValidate(config: AppConfig): void {
 }
 
 /**
- * Baca override integer dari env untuk parameter trial.
+ * Baca override angka dari env.
  *
  * `params.yaml` adalah default yang aman untuk produksi. Env override dipakai
- * untuk menyesuaikan kuota per environment tanpa mengubah file yang di-commit.
- * Nilai yang tidak valid tetap ditolak oleh `paramsSchema.parse` di bawah.
+ * untuk menyesuaikan kuota/interval per environment tanpa mengubah file yang
+ * di-commit. Nilai yang tidak valid tetap ditolak oleh `paramsSchema.parse`.
  */
-function trialEnv(name: string, fallback: number): number {
+function envNumber(name: string, fallback: number): number {
   const raw = process.env[name];
   if (raw === undefined || raw.trim() === "") return fallback;
+  return Number(raw);
+}
+
+function envOptionalNumber(name: string): number | undefined {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return undefined;
   return Number(raw);
 }
 
@@ -285,9 +313,9 @@ export function loadConfig(): AppConfig {
   const params = paramsSchema.parse({
     ...rawParams,
     trial: {
-      free_runs: trialEnv("TRIAL_FREE_RUNS", rawParams.trial.free_runs),
-      max_attempts: trialEnv("TRIAL_MAX_ATTEMPTS", rawParams.trial.max_attempts),
-      free_media_attempts: trialEnv(
+      free_runs: envNumber("TRIAL_FREE_RUNS", rawParams.trial.free_runs),
+      max_attempts: envNumber("TRIAL_MAX_ATTEMPTS", rawParams.trial.max_attempts),
+      free_media_attempts: envNumber(
         "TRIAL_FREE_MEDIA_ATTEMPTS",
         rawParams.trial.free_media_attempts,
       ),
@@ -295,6 +323,37 @@ export function loadConfig(): AppConfig {
     holder: {
       ...rawParams.holder,
       enabled: holderEnabled,
+      // Interval worker snapshot dan plafon anggaran bisa diatur per environment.
+      snapshot_interval_hours: envNumber(
+        "HOLDER_SNAPSHOT_INTERVAL_HOURS",
+        rawParams.holder.snapshot_interval_hours,
+      ),
+      snapshot_interval_minutes: envOptionalNumber("HOLDER_SNAPSHOT_INTERVAL_MINUTES"),
+      tier_min_gap_minutes: envOptionalNumber("HOLDER_TIER_MIN_GAP_MINUTES"),
+      snapshot_concurrency: envNumber(
+        "HOLDER_SNAPSHOT_CONCURRENCY",
+        rawParams.holder.snapshot_concurrency,
+      ),
+      snapshot_batch_size: envNumber(
+        "HOLDER_SNAPSHOT_BATCH_SIZE",
+        rawParams.holder.snapshot_batch_size,
+      ),
+      snapshot_jitter_ratio: envNumber(
+        "HOLDER_SNAPSHOT_JITTER_RATIO",
+        rawParams.holder.snapshot_jitter_ratio,
+      ),
+      snapshot_retention_days: envNumber(
+        "HOLDER_SNAPSHOT_RETENTION_DAYS",
+        rawParams.holder.snapshot_retention_days,
+      ),
+      snapshot_retention_min_per_wallet: envNumber(
+        "HOLDER_SNAPSHOT_RETENTION_MIN_PER_WALLET",
+        rawParams.holder.snapshot_retention_min_per_wallet,
+      ),
+      daily_budget_usd: envNumber(
+        "HOLDER_DAILY_BUDGET_USD",
+        rawParams.holder.daily_budget_usd,
+      ),
     },
   });
 

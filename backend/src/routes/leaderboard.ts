@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireProject } from "../middleware/auth";
-import { getHolderStatus } from "../holder/service";
+import { getHolderTierSummary } from "../holder/service";
 import {
   getLeaderboardRanking,
   isProjectOptedOut,
@@ -31,12 +31,12 @@ leaderboardRoutes.get("/me", async (c) => {
 
   let tier: { id: string; name: string } | null = null;
   try {
-    const holderStatus = await getHolderStatus(project.ownerWallet, project.id);
+    const holderStatus = await getHolderTierSummary(project.ownerWallet);
     if (holderStatus.tier) {
       tier = { id: holderStatus.tier.id, name: holderStatus.tier.name };
     }
   } catch {
-    // Abaikan error snapshot/RPC agar leaderboard tetap responsif
+    // Abaikan error snapshot agar leaderboard tetap responsif
   }
 
   return c.json({

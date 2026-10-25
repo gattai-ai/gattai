@@ -284,7 +284,7 @@ export function StatsPage() {
           <span className="stats-live-dot" />
           <span>Settled on Robinhood Chain</span>
           <span className="stats-sep">·</span>
-          <span>Chain ID {data?.contracts?.chain_id ?? 4663}</span>
+          <span>Chain ID {data?.contracts?.chain_id ?? "—"}</span>
           <span className="stats-sep">·</span>
           <span>Cache: 60s</span>
         </div>
@@ -565,20 +565,22 @@ export function StatsPage() {
               </div>
 
               <div className="stats-card">
-                <span className="stats-card-label">Subsidized AI Cost</span>
+                <span className="stats-card-label">Subsidized AI Cost (30d)</span>
                 <span className="stats-card-num">
                   ${Number(data.holders.subsidized_cost_usd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                 </span>
-                <span className="stats-card-sub">Provider compute funded by protocol</span>
+                <span className="stats-card-sub">Provider compute funded by protocol (settled runs)</span>
               </div>
 
-              <div className="stats-card">
-                <span className="stats-card-label">Allocated Fee Pool</span>
-                <span className="stats-card-num">
-                  ${Number(data.holders.allocated_pool_usd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-                <span className="stats-card-sub">Ecosystem fee split reserve</span>
-              </div>
+              {Number(data.holders.allocated_pool_usd) > 0 && (
+                <div className="stats-card">
+                  <span className="stats-card-label">Allocated Fee Pool</span>
+                  <span className="stats-card-num">
+                    ${Number(data.holders.allocated_pool_usd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                  <span className="stats-card-sub">Ecosystem fee split reserve</span>
+                </div>
+              )}
             </div>
 
             {/* Daily Holder Runs 30-Day Line Chart */}
