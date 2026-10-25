@@ -21,7 +21,8 @@
     "refund:queue": "bun scripts/refund-queue.ts",
     "burn": "bun scripts/burn.ts",
     "burn:index": "bun scripts/index-burns.ts",
-    "holder:snapshot": "bun scripts/holder-snapshot.ts"
+    "holder:snapshot": "bun scripts/holder-snapshot.ts",
+    "mimo:check": "bun scripts/check-mimo.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.5",

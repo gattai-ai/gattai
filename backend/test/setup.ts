@@ -55,6 +55,7 @@ process.env.OPENAI_API_KEY ||= "test-openai";
 process.env.PERPLEXITY_API_KEY ||= "test-perplexity";
 process.env.HIGGSFIELD_API_KEY ||= "test-higgsfield";
 process.env.MIMO_API_KEY ||= "test-mimo";
+process.env.MIMO_API_URL ||= "https://token-plan-sgp.xiaomimimo.com/v1";
 // Test kuota butuh anggaran teks DAN media yang cukup untuk membuktikan kedua
 // anggaran tidak saling makan. Default produksi (3 teks / 0 media) tetap
 // diuji terpisah lewat assertProductionConfig; jangan bergantung pada .env

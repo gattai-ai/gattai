@@ -22,6 +22,8 @@ type EnvKey =
   | "NODE_ENV"
   | "SESSION_SECRET"
   | "HIGGSFIELD_API_KEY"
+  | "MIMO_API_KEY"
+  | "MIMO_API_URL"
   | "SIWE_DOMAIN"
   | "FRONTEND_URL"
   | "DATABASE_URL"
@@ -64,6 +66,8 @@ const KEYS: EnvKey[] = [
   "NODE_ENV",
   "SESSION_SECRET",
   "HIGGSFIELD_API_KEY",
+  "MIMO_API_KEY",
+  "MIMO_API_URL",
   "SIWE_DOMAIN",
   "FRONTEND_URL",
   "DATABASE_URL",
@@ -262,6 +266,8 @@ describe("preflight produksi mainnet", () => {
     NODE_ENV: "production",
     DATABASE_URL: "postgres://user:pass@localhost:5432/gattai",
     CHAIN_ID: "4663",
+    MIMO_API_KEY: "tp-test",
+    MIMO_API_URL: "https://token-plan-sgp.xiaomimimo.com/v1",
     DEPOSIT_MANAGER_ADDRESS: "0x1111111111111111111111111111111111111111",
     TREASURY_ADDRESS: "0x2222222222222222222222222222222222222222",
     USDG_TOKEN_ADDRESS: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
@@ -292,6 +298,12 @@ describe("preflight produksi mainnet", () => {
   test("konfigurasi USDG-only yang lengkap → lolos", () => {
     withPatchedEnv(base, () => {
       expect(() => assertProductionConfig()).not.toThrow();
+    });
+  });
+
+  test("MIMO key terisi tanpa MIMO_API_URL → gagal (region harus eksplisit)", () => {
+    withPatchedEnv({ ...base, MIMO_API_KEY: "tp-test", MIMO_API_URL: undefined }, () => {
+      expect(() => assertProductionConfig()).toThrow("MIMO_API_URL");
     });
   });
 

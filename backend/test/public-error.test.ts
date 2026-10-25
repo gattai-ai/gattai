@@ -92,6 +92,17 @@ describe("toPublicRunError", () => {
     expect(pub.message).not.toContain("mimo");
   });
 
+  test("401/403/404 provider → PROVIDER_NOT_CONFIGURED (bukan 'try again')", () => {
+    for (const status of [401, 403, 404]) {
+      const pub = toPublicRunError(providerError("mimo", status, "raw body"));
+      expect(pub.code).toBe("PROVIDER_NOT_CONFIGURED");
+      expect(pub.message).toBe(
+        "This formation is temporarily unavailable. Please try again later.",
+      );
+      expect(pub.message).not.toContain("mimo");
+    }
+  });
+
   test("error tak dikenal → RUN_FAILED generik", () => {
     const pub = toPublicRunError(new Error("boom at /app/src/secret.ts"));
     expect(pub.code).toBe("RUN_FAILED");

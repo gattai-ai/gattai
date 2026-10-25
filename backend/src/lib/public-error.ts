@@ -81,6 +81,12 @@ export function toPublicRunError(error: unknown): PublicRunError {
     return { code: "PROVIDER_NOT_CONFIGURED", message: MESSAGES.PROVIDER_NOT_CONFIGURED };
   }
   if (error instanceof ProviderError) {
+    // 401/403/404 hampir selalu berarti key/region/endpoint salah, bukan
+    // gangguan sementara. Pesan "temporarily unavailable" lebih jujur daripada
+    // menyuruh user mencoba lagi terus-menerus.
+    if (error.status === 401 || error.status === 403 || error.status === 404) {
+      return { code: "PROVIDER_NOT_CONFIGURED", message: MESSAGES.PROVIDER_NOT_CONFIGURED };
+    }
     return { code: "PROVIDER_ERROR", message: MESSAGES.PROVIDER_ERROR };
   }
   if (error instanceof RunLimitReachedError) {

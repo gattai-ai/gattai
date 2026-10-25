@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { getModelByRef } from "../config";
+import { MissingEnvError } from "../env";
+import { ProviderError } from "../lib/public-error";
 import { getAdapter, type InvokeResult } from "../providers";
 import { parseJsonFromText } from "./media-spec";
 import { INTERPRETER_SYSTEM } from "./prompts";
@@ -97,8 +99,23 @@ function buildUserContent(original: string, summary?: string | null): string {
 }
 
 /**
+ * Error provider yang tidak boleh di-fallback: salah konfigurasi/auth (401/403/404)
+ * dan env yang belum diisi. Kalau ini ditelan, step `interpret` terlihat sukses
+ * padahal provider menolak; kegagalan baru muncul di step `execute` dan
+ * menyesatkan operator. Error transien tetap boleh fallback seperti sebelumnya.
+ */
+function isConfigurationError(error: unknown): boolean {
+  if (error instanceof MissingEnvError) return true;
+  return (
+    error instanceof ProviderError &&
+    (error.status === 401 || error.status === 403 || error.status === 404)
+  );
+}
+
+/**
  * Menjalankan interpreter. Validasi gagal → coba ulang satu kali → fallback
- * ke pass-through (dengan flag di log). Tidak pernah melempar error.
+ * ke pass-through (dengan flag di log). Error konfigurasi/auth provider
+ * dilempar agar tidak menutupi salah region/key; error lain tetap fallback.
  */
 export async function runInterpreter(input: {
   modelRef: string;
@@ -148,6 +165,13 @@ export async function runInterpreter(input: {
         `[interpreter] validasi brief gagal (percobaan ${attempt + 1}): ${parsed.error.message}`,
       );
     } catch (error) {
+      if (isConfigurationError(error)) {
+        console.error(
+          `[interpreter] provider menolak konfigurasi/auth; fallback dibatalkan:`,
+          error,
+        );
+        throw error;
+      }
       console.warn(`[interpreter] panggilan gagal (percobaan ${attempt + 1}):`, error);
     }
   }

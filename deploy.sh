@@ -278,9 +278,10 @@ docker compose stop caddy backend
 log "Building frontend"
 export VITE_DEFAULT_CHAIN_ID=4663
 export VITE_RPC_URLS="4663=https://rpc.mainnet.chain.robinhood.com"
-# Empty (not unset) so a stray frontend/.env cannot point production at a
-# cross-origin API and break SameSite session cookies.
-export VITE_API_URL=""
+# Force same-origin API base. An absolute cross-origin URL would break the
+# SameSite SIWE cookie; `/api` is the path Caddy/Vite proxy to the backend.
+# Explicit `/api` also protects against builds that mishandle an empty value.
+export VITE_API_URL="/api"
 bun run build
 
 log "Applying database migrations"

@@ -9,7 +9,21 @@
  * `credentials: "include"` tetap dipakai agar cookie ikut pada permintaan itu.
  */
 
-const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "") ?? "/api";
+/**
+ * Normalisasi base URL API.
+ *
+ * Nilai kosong/whitespace (mis. build lama yang mengisi `VITE_API_URL=""`)
+ * BUKAN nullish, jadi `?? "/api"` tidak cukup. Tanpa normalisasi ini frontend
+ * memanggil `/auth/nonce` (bukan `/api/auth/nonce`) dan Caddy mengembalikan
+ * HTML SPA. `deploy.sh` sekarang memaksa `/api`, tetapi helper ini tetap
+ * defensif untuk build/dev yang tidak mengisi variabel tersebut.
+ */
+export function resolveApiBase(raw: string | undefined): string {
+  const trimmed = raw?.trim();
+  return trimmed?.replace(/\/+$/, "") || "/api";
+}
+
+const API_BASE = resolveApiBase(import.meta.env.VITE_API_URL as string | undefined);
 
 export class ApiError extends Error {
   readonly status: number;

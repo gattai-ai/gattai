@@ -52,6 +52,18 @@ describe("interpreter", () => {
     expect(result.brief.pass_through).toBe(true);
   });
 
+  test("401 provider → tidak fallback, error dilempar", async () => {
+    let call = 0;
+    useFetch(async () => {
+      call++;
+      return new Response("unauthorized", { status: 401 });
+    });
+    await expect(
+      runInterpreter({ modelRef: "mimo_architect", original: "x" }),
+    ).rejects.toThrow("The model provider could not complete this step.");
+    expect(call).toBe(1);
+  });
+
   test("retry HTTP transien (500) sebelum sukses", async () => {
     let call = 0;
     useFetch(async () => {

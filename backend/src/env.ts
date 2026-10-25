@@ -106,6 +106,15 @@ export function assertProductionConfig(): void {
     );
   }
 
+  // Region MIMO Token Plan melekat pada base URL (CN vs SGP). Jangan biarkan
+  // produksi diam-diam memakai default CN saat key yang dipasang key SGP:
+  // panggilan akan 401 dan interpreter sempat menutupinya dengan fallback.
+  if (process.env.MIMO_API_KEY?.trim() && !process.env.MIMO_API_URL?.trim()) {
+    throw new Error(
+      "MIMO_API_URL is required when MIMO_API_KEY is set in production; use the region from your MIMO Token Plan.",
+    );
+  }
+
   // Token snapshot holder sengaja terpisah dari BURN_TOKEN_ADDRESS: mengubah
   // konfigurasi burn tidak boleh mengubah token yang menentukan tier.
   assertAddress("HOLDER_TOKEN_ADDRESS", env.holderTokenAddress);

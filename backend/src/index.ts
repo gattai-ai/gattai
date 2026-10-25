@@ -26,6 +26,9 @@ const siweDomains = env.siweDomains;
 serve({ fetch: app.fetch, port, hostname: "0.0.0.0" });
 console.log(`Server berjalan di http://localhost:${port}`);
 console.log(`[startup] domain SIWE: ${siweDomains.join(", ")}`);
+// Region MIMO melekat pada base URL; log host membuat salah region (CN vs SGP)
+// langsung kelihatan tanpa membocorkan API key.
+console.log(`[startup] MIMO endpoint: ${env.mimoApiUrl} (model ${env.mimoModel})`);
 
 // Peringatan dini: key provider yang kosong membuat formasi terkait gagal saat
 // dijalankan (pesan ke user tetap generik). Nama variabel hanya untuk log.
