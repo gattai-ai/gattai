@@ -521,13 +521,13 @@ describe("ChatView: formasi coming soon", () => {
     serveChat([], { recipes: () => json({ recipes: SOON_RECIPES }) });
     renderChat("/app/chat");
 
-    const visual = await screen.findByRole("button", { name: "Visual — coming soon" });
+    const visual = await screen.findByRole("button", { name: "Visual: coming soon" });
     // `aria-disabled`, bukan `disabled` native: tetap terjangkau keyboard.
     expect(visual.getAttribute("aria-disabled")).toBe("true");
     expect(visual.textContent).toContain("Soon");
     // Keterangan selalu tampil — badge saja tidak menjelaskan sebabnya, dan di
     // layar sentuh tidak ada hover.
-    expect(screen.getByText(/coming soon — the media layer/)).toBeDefined();
+    expect(screen.getByText(/coming soon\. The media layer/)).toBeDefined();
     expect(screen.getByRole("button", { name: "Auto" })).toBeDefined();
   });
 
@@ -536,7 +536,7 @@ describe("ChatView: formasi coming soon", () => {
     serveChat(requests, { recipes: () => json({ recipes: SOON_RECIPES }) });
     renderChat("/app/chat");
 
-    const visual = await screen.findByRole("button", { name: "Visual — coming soon" });
+    const visual = await screen.findByRole("button", { name: "Visual: coming soon" });
     fireEvent.click(visual);
     // Kelasnya tetap `soon` (bukan `on`): pil tidak pernah menjadi pilihan aktif.
     expect(visual.className).toBe("soon");
@@ -567,7 +567,7 @@ describe("ChatView: formasi coming soon", () => {
       await waitFor(() =>
         expect(screen.getByRole("button", { name: "Auto" }).className).toContain("on"),
       );
-      expect(screen.getByRole("button", { name: "Visual — coming soon" }).className).toBe("soon");
+      expect(screen.getByRole("button", { name: "Visual: coming soon" }).className).toBe("soon");
     } finally {
       setUrl("http://localhost/");
     }

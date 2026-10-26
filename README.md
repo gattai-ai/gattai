@@ -10,7 +10,7 @@
 
 [![Build](https://img.shields.io/badge/Build-CI%20green-22c55e?style=flat-square)](#)
 [![Network](https://img.shields.io/badge/Network-Robinhood%20Chain%204663-orange?style=flat-square)](#smart-contracts--deployments)
-[![Mainnet](https://img.shields.io/badge/Mainnet-Fase%201%20Live-22c55e?style=flat-square)](#smart-contracts--deployments)
+[![Mainnet](https://img.shields.io/badge/Mainnet-Fase%201%20Canary-f59e0b?style=flat-square)](#smart-contracts--deployments)
 [![Phase](https://img.shields.io/badge/Phase-1%20USDG%20Only-blue?style=flat-square)](#smart-contracts--deployments)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](#license--security)
 
@@ -95,7 +95,7 @@ ETH / USDG    $GATTAI
 4. **Public run shares** live at `/run/:slug`. The backend renders crawler-visible meta and a 1200×630 OG image, while `GET /v1/public/runs/:slug` exposes only the formation, optional prompt, output, public step labels, and charged cost. Wallet, balance, API key, provider cost, and internal IDs are never included.
 5. **Weekly leaderboard** lives at `/leaderboard`. It ranks settled runs with a 200-run/project/day UTC cap, excludes team/treasury/internal wallets, shows the top 20, and exposes a private rank via `GET /v1/leaderboard/me`. Projects can opt out without exposing wallets or internal IDs.
 6. **Public stats** live at `/stats` and `GET /v1/public/stats`. It aggregates settled run usage, USDG deposit volume, settled credits/USD revenue, onchain burns (consistent with `/burns`), and smart contract paused status with Blockscout links.
-7. **Holder Tiers** live at `/holders`. Wallet holders of $GATTAI receive daily free AI run quotas across three tiers (Pilot: 10k tokens → 5 runs/day, Commander: 50k tokens → 15 text + 1 media/day, Fleet Admiral: 250k tokens → 40 text + 5 media/day). Anti-dumping is enforced via 2-consecutive-snapshot verification ($\min(S_N, S_{N-1})$). Quotas reset at 00:00 UTC with a daily protocol budget cap and emergency kill-switch. Public tiers are exposed at `GET /v1/public/holder/tiers` and authenticated status at `GET /v1/holder/status`.
+7. **Holder Tiers** are implemented at `/holders` but **disabled until Gate B soak finishes**. When enabled, wallet holders of the live Pons `$GATTAI` token (`0x863019e2e676164fcfaab6e14dcd6568eb6deb1f`) receive daily free AI run quotas across three tiers (Pilot: 10k tokens → 5 runs/day, Commander: 50k tokens → 15 text + 1 media/day, Fleet Admiral: 250k tokens → 40 text + 5 media/day). Anti-dumping is enforced via 2-consecutive-snapshot verification ($\min(S_N, S_{N-1})$). Quotas reset at 00:00 UTC with a daily protocol budget cap and emergency kill-switch. Public tiers are exposed at `GET /v1/public/holder/tiers` (`enabled: false` today) and authenticated status at `GET /v1/holder/status`. External audit and Public Beta are still pending. The Pons token is not a Phase 1 deposit asset; `GattaiToken.sol` is not deployed on mainnet.
 
 ---
 
@@ -150,7 +150,8 @@ Contracts are verified on Robinhood Chain. Phase 1 runs **USDG-only** with nativ
 |---|---|---|
 | **DepositManager (Phase 1)** | [`0xbf1F9ea84820B619EdC58eD15304Eb22547fBC07`](https://explorer.chain.robinhood.com/address/0xbf1F9ea84820B619EdC58eD15304Eb22547fBC07) | Live deposit router. Forwards straight to treasury. `nativeAccepted: false` |
 | **USDG** | [`0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168`](https://explorer.chain.robinhood.com/address/0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168) | Allowlisted deposit asset (6 decimals) |
-| **Treasury (Safe 2-of-3)** | [`0x5a777DAB051a2D05638b851330E7360C9333B905`](https://explorer.chain.robinhood.com/address/0x5a777DAB051a2D05638b851330E7360C9333B905) | Multi-sig receiver of all deposits |
+| **Treasury (Safe 2-of-3)** | [`0x5a777DAB051a2D05638b851330E7360C9333B905`](https://explorer.chain.robinhood.com/address/0x5a777DAB051a2D05638b851330E7360C9333B905) | Multi-sig receiver of all deposits. Pause/unpause drill done; nonce `2`. Contract currently unpaused, 0 deposits |
+| **GATTAI (Pons)** | [`0x863019e2e676164fcfaab6e14dcd6568eb6deb1f`](https://explorer.chain.robinhood.com/address/0x863019e2e676164fcfaab6e14dcd6568eb6deb1f) | Official token. Not a Phase 1 deposit asset. `GattaiToken.sol` is not deployed |
 
 ### Testnet (Robinhood Testnet · Chain ID `46630`)
 

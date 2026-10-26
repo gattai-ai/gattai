@@ -29,7 +29,7 @@ function runDescription(run: PublicRunResponse): string {
   const steps = `${run.steps.length} ${run.steps.length === 1 ? "step" : "steps"}`;
   if (run.prompt) {
     const prompt = run.prompt.replace(/\s+/g, " ").trim();
-    return `${prompt.length > 145 ? `${prompt.slice(0, 144)}…` : prompt} — ${steps} on GATTAI.`;
+    return `${prompt.length > 145 ? `${prompt.slice(0, 144)}…` : prompt} · ${steps} on GATTAI.`;
   }
   return `A ${run.formation.name} formation run: ${steps} on GATTAI.`;
 }
@@ -136,7 +136,7 @@ export function RunPage({ slug }: { slug: string }) {
           <div className="run-empty" data-r>
             <span className="eyebrow">Shared run</span>
             <h1>Couldn’t load this run.</h1>
-            <p>The share service didn’t answer. The link itself is probably fine — try again.</p>
+            <p>The share service didn’t answer. The link itself is probably fine. Try again.</p>
             <button className="btn btn-acc" onClick={() => void query.refetch()}>
               Retry
             </button>

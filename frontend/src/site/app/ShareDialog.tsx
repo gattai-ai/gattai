@@ -95,7 +95,7 @@ export function ShareDialog({
 
   function postToX() {
     if (!share) return;
-    const text = `${runQuery.data?.recipe ?? title ?? "A GATTAI run"} — made with GATTAI`;
+    const text = `${runQuery.data?.recipe ?? title ?? "A GATTAI run"} · made with GATTAI`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(share.url)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   }
@@ -182,7 +182,7 @@ export function ShareDialog({
               </button>
             </div>
             <p className="share-note">
-              Anyone with the link can view this run. Revoke it any time — the old URL stops working.
+              Anyone with the link can view this run. Revoke it any time. The old URL stops working.
             </p>
           </>
         ) : (

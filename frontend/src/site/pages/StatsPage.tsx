@@ -215,7 +215,7 @@ function SimpleLineChart({
 
 export function StatsPage() {
   useDocumentMeta({
-    title: "GATTAI Stats — Onchain usage, revenue & burns",
+    title: "GATTAI Stats: Onchain usage, revenue & burns",
     description:
       "Verifiable product usage, settled revenue, and token burn metrics for GATTAI settled on Robinhood Chain.",
     image: "https://www.gattai.tech/logo_gattai.png",
@@ -284,7 +284,7 @@ export function StatsPage() {
           <span className="stats-live-dot" />
           <span>Settled on Robinhood Chain</span>
           <span className="stats-sep">·</span>
-          <span>Chain ID {data?.contracts?.chain_id ?? "—"}</span>
+          <span>Chain ID {data?.contracts?.chain_id ?? "-"}</span>
           <span className="stats-sep">·</span>
           <span>Cache: 60s</span>
         </div>

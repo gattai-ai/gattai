@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatUnits } from "viem";
+import { MAINNET_CONTRACTS } from "@shared/contracts/mainnet";
 import { Link } from "@/lib/router";
 import { searchOf, useRouter } from "@/lib/router-context";
 import { api } from "@/lib/api";
+import { explorerAddressUrl, shortAddress } from "@/lib/explorer";
 import { useDocumentTitle, useSiteReveal } from "@/site/useSite";
 import { useSession } from "@/lib/use-session";
 import { useRecipes } from "@/features/chat/useRecipes";
@@ -61,7 +63,7 @@ const RECIPE_EXAMPLES: Record<string, string> = {
   code: "Code that has already been reviewed once before you read it.",
   visual: "A one-line idea becomes a full art brief, then the image set.",
   video: "Shot list with timing and audio cues, rendered as a clip.",
-  launch_kit: "Thread, one-pager and bio \u2014 plus a banner and PFP to match.",
+  launch_kit: "Thread, one-pager and bio, plus a banner and PFP to match.",
 };
 
 /**
@@ -123,7 +125,7 @@ export function FormationCards({ formations }: { formations: DisplayRecipe[] }) 
               className="rc chamfer soon"
               data-r={String(2 + (index % 3))}
               aria-disabled="true"
-              title={`${recipe.name} is coming soon — the media layer isn't connected yet.`}
+              title={`${recipe.name} is coming soon. The media layer isn't connected yet.`}
             >
               {content}
             </div>
@@ -159,7 +161,7 @@ interface ConsoleScenario {
 
 const CONSOLE_SCENARIOS: Record<string, ConsoleScenario> = {
   refine: {
-    prompt: "Write a hero line for a coffee subscription \u2014 3 options, playful.",
+    prompt: "Write a hero line for a coffee subscription. 3 options, playful.",
     route: ["gattai/refine", "0.91"],
     steps: [["GPT", "interpret"], ["Claude", "execute"]],
     brief: '{\n  "pass_through": false,\n  "goal": "Hero headline options for a coffee subscription",\n  "deliverable": "3 headlines + 1-line subhead each",\n  "style": "playful, short"\n}',
@@ -196,7 +198,7 @@ const CONSOLE_SCENARIOS: Record<string, ConsoleScenario> = {
 };
 
 export function LandingPage() {
-  useDocumentTitle("GATTAI \u2014 Separate machines. One formation.");
+  useDocumentTitle("GATTAI: Separate machines. One formation.");
   useSiteReveal();
   const { location } = useRouter();
 
@@ -232,7 +234,7 @@ export function LandingPage() {
   const lastTx = useMemo(() => {
     const last = executedEpochs[executedEpochs.length - 1];
     const hash = last?.tx_hashes[0];
-    return hash ? `0x${hash.slice(2, 6)}\u2026${hash.slice(-4)} \u2197` : "\u2014";
+    return hash ? `0x${hash.slice(2, 6)}\u2026${hash.slice(-4)} \u2197` : "-";
   }, [executedEpochs]);
 
   // ---- intro class ----
@@ -992,8 +994,10 @@ export function LandingPage() {
               <small>GATTAI</small>
             </div>
             <div className="ca">
-              <span>CA · TBA at launch</span>
-              <button data-copy="TBA">Copy</button>
+              <span title={MAINNET_CONTRACTS.token}>
+                CA · {shortAddress(MAINNET_CONTRACTS.token, 6)}
+              </span>
+              <button data-copy={MAINNET_CONTRACTS.token}>Copy</button>
             </div>
             <div className="built">Built on Robinhood Chain</div>
           </div>
@@ -1698,7 +1702,17 @@ export function LandingPage() {
               </div>
               <div className="kv">
                 <span>Address</span>
-                <b>TBA at launch</b>
+                <b>
+                  <a
+                    href={explorerAddressUrl(MAINNET_CONTRACTS.token)}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={MAINNET_CONTRACTS.token}
+                    style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}
+                  >
+                    {shortAddress(MAINNET_CONTRACTS.token, 8)}
+                  </a>
+                </b>
               </div>
             </div>
           </div>

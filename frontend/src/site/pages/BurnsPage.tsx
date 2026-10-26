@@ -155,8 +155,8 @@ export function BurnsPage() {
 
   useDocumentMeta({
     title: data
-      ? `GATTAI Burns — ${compactAmount(totalRaw, decimals)} $GATTAI burned`
-      : "GATTAI Burns — Onchain burn dashboard",
+      ? `GATTAI Burns: ${compactAmount(totalRaw, decimals)} $GATTAI burned`
+      : "GATTAI Burns: Onchain burn dashboard",
     description:
       "Onchain burn dashboard for $GATTAI: team burns, epoch buybacks, and community burns settled on Robinhood Chain. Every amount links to its transaction.",
     image: "https://www.gattai.tech/logo_gattai.png",

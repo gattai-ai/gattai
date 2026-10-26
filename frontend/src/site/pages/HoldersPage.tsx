@@ -42,7 +42,7 @@ function useUtcCountdown(targetIso: string | null): string {
 
 export function HoldersPage() {
   useDocumentMeta({
-    title: "GATTAI — Holder Tiers",
+    title: "GATTAI: Holder Tiers",
     description:
       "Hold $GATTAI to use AI formations for free with stake-free onchain snapshot verification.",
     image: "https://www.gattai.tech/logo_gattai.png",
@@ -98,7 +98,7 @@ export function HoldersPage() {
         <h1 className="holders-title">Hold $GATTAI. Use AI for free.</h1>
         <p className="holders-subtitle">
           Stake-free tier quotas powered by Robinhood Chain token holding snapshots.
-          No locking, no contracts, no yield claims — pure AI compute platform utility.
+          No locking, no contracts, no yield claims. Pure AI compute platform utility.
         </p>
 
         {!isAuthenticated && (
@@ -354,7 +354,7 @@ export function HoldersPage() {
                     <strong>{formatTokenDisplay(t.min_tokens)}</strong> $GATTAI
                   </td>
                   <td>{t.free_runs_per_day} runs / day</td>
-                  <td>{t.free_media_per_day > 0 ? `${t.free_media_per_day} / day` : "—"}</td>
+                  <td>{t.free_media_per_day > 0 ? `${t.free_media_per_day} / day` : "-"}</td>
                   <td>
                     <ul className="holders-perk-list">
                       {t.perks.map((p, idx) => (

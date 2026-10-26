@@ -149,7 +149,7 @@ export function renderRunHtml(
   const prompt = shared.share.showPrompt ? shared.run.input : null;
   const stepCount = shared.steps.length;
   const description = prompt
-    ? `${truncate(prompt, 150)} — ${stepCount} ${stepCount === 1 ? "step" : "steps"} on GATTAI.`
+    ? `${truncate(prompt, 150)} · ${stepCount} ${stepCount === 1 ? "step" : "steps"} on GATTAI.`
     : `A ${formationName} formation run: ${stepCount} ${stepCount === 1 ? "step" : "steps"} on GATTAI.`;
   const block = renderSeoBlock({
     title: `${formationName} · Shared run · GATTAI`,

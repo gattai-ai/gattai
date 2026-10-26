@@ -112,7 +112,7 @@ export function LeaderboardPage() {
   const range = data ? fmtWeekRange(data.week) : "";
 
   useDocumentMeta({
-    title: "GATTAI Leaderboard — Weekly builders",
+    title: "GATTAI Leaderboard: Weekly builders",
     description:
       "Weekly leaderboard of settled GATTAI runs. See the most active projects, your own rank, and opt out at any time. No wallets exposed.",
     image: "https://www.gattai.tech/og-default.png",
@@ -240,7 +240,7 @@ export function LeaderboardPage() {
               <p className="lb-me-copy">Could not load your rank. Try again shortly.</p>
             ) : meData ? (
               <>
-                <div className="lb-me-rank">{meData.rank !== null ? `#${meData.rank}` : "—"}</div>
+                <div className="lb-me-rank">{meData.rank !== null ? `#${meData.rank}` : "-"}</div>
                 <p className="lb-me-copy">
                   {meData.runs.toLocaleString("en-US")} settled run
                   {meData.runs === 1 ? "" : "s"} {week === "previous" ? "last week" : "this week"}

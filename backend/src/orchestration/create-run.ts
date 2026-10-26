@@ -265,7 +265,7 @@ export async function createRun(input: CreateRunInput): Promise<CreatedRun> {
             ? "Free trial attempts used up. Top up to continue."
             : code === "TRIAL_EXHAUSTED"
               ? "Free prompts used up. Top up to continue."
-              : "Free media allowance used up. Text prompts are still free — top up to run this formation.";
+              : "Free media allowance used up. Text prompts are still free. Top up to run this formation.";
         throw new ApiError(402, code, message, topup);
       }
 

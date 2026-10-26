@@ -779,8 +779,8 @@ export function ChatView() {
                 // tetap terjangkau keyboard dan tooltip-nya terbaca pembaca layar
                 // (tombol `disabled` keluar dari tab-order).
                 aria-disabled={soon || undefined}
-                aria-label={soon ? `${recipe.name} — coming soon` : undefined}
-                title={soon ? `${recipe.name} is coming soon — the media layer isn't connected yet.` : undefined}
+                aria-label={soon ? `${recipe.name}: coming soon` : undefined}
+                title={soon ? `${recipe.name} is coming soon. The media layer isn't connected yet.` : undefined}
                 onClick={soon ? undefined : () => setFormation(recipe.id)}
               >
                 {recipe.name}
@@ -813,7 +813,7 @@ export function ChatView() {
         {soonRecipes.length > 0 && (
           <p className="soonhint">
             {soonRecipes.map((recipe) => recipe.name).join(", ")}{" "}
-            {soonRecipes.length === 1 ? "is" : "are"} coming soon — the media layer isn&apos;t
+            {soonRecipes.length === 1 ? "is" : "are"} coming soon. The media layer isn&apos;t
             connected yet.
           </p>
         )}
@@ -1013,11 +1013,11 @@ export function ChatView() {
           <span>
             {pendingIsFree ? (
               <>
-                <b>Free on your trial</b> — uses one of your free media runs.
+                <b>Free on your trial</b>. Uses one of your free media runs.
               </>
             ) : trial != null && trial.mediaLeft === 0 ? (
               <>
-                Your free media runs are used up — this one runs on credits. Estimated cost{" "}
+                Your free media runs are used up. This one runs on credits. Estimated cost{" "}
                 <b>~{estimateFor(pendingMedia.recipeId) ?? "-"} cr</b>.
               </>
             ) : (

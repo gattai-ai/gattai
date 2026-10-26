@@ -21,7 +21,7 @@ const CODE_MESSAGES: Record<string, string> = {
   TRIAL_EXHAUSTED: "You have used all your free prompts. Top up to keep going.",
   TRIAL_ATTEMPTS_EXHAUSTED: "Free trial attempts are used up. Top up to keep going.",
   TRIAL_MEDIA_EXHAUSTED:
-    "Your free media runs are used up. Text prompts are still free — top up to run this formation.",
+    "Your free media runs are used up. Text prompts are still free. Top up to run this formation.",
   // Kuota holder (free runs berbasis tier $GATTAI).
   HOLDER_BUDGET_EXHAUSTED:
     "Today's holder free-run budget is used up. Top up to continue, or try again after 00:00 UTC.",
